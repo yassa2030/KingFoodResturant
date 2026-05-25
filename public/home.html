@@ -5,7 +5,7 @@
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>King Food Home</title>
-    <link  rel='icon' href='assets/KingfoodPNG (1).png'>
+    <link rel='icon' href='assets/KingfoodPNG (1).png'>
     <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
     <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css' rel='stylesheet'>
     <link rel='stylesheet' href='site.css'>
@@ -56,10 +56,55 @@
       @keyframes cup-handle{from,to{animation-timing-function:ease-in;d:path("M64,4.413s6.64-2.913,11-2.913c11.739,0,19.5,10.759,19.5,22.497,0,23.475-45,22.497-45,22.497");transform:translate(0,0)}10%,40%,60%,90%{animation-timing-function:ease-out;d:path("M48.036,4.415s-.03-2.913-.049-2.913c-.052,0-.087,10.759-.087,22.497,0,23.475,.2,22.497,.2,22.497");transform:translate(0,15px)}50%{animation-timing-function:ease-in;d:path("M32,4.413s-6.64-2.913-11-2.913C9.261,1.5,1.5,12.259,1.5,23.997c0,23.475,45,22.497,45,22.497");transform:translate(0,0)}}
       @keyframes steam-left{from{stroke-dashoffset:48}25%,to{stroke-dashoffset:-66}}
       @keyframes steam-right{from,50%{stroke-dashoffset:35}75%,to{stroke-dashoffset:-76}}
+
+      /* ✅ Payment Toast Styles */
+      #paymentToast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 999999;
+        min-width: 320px;
+        max-width: 420px;
+        border-radius: 14px;
+        padding: 18px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        transform: translateX(110%);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        pointer-events: none;
+      }
+      #paymentToast.show {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+      #paymentToast.success { background: linear-gradient(135deg, #198754, #20c997); }
+      #paymentToast.error   { background: linear-gradient(135deg, #dc3545, #e85d6e); }
+      #paymentToast .toast-icon { font-size: 26px; flex-shrink: 0; }
+      #paymentToast .toast-body { flex: 1; }
+      #paymentToast .toast-title { font-size: 16px; margin-bottom: 3px; }
+      #paymentToast .toast-msg   { font-size: 13px; font-weight: 400; opacity: 0.92; }
     </style>
 </head>
 
 <body>
+
+    <!-- ✅ Payment Result Toast -->
+    <div id="paymentToast" role="alert" aria-live="assertive">
+      <span class="toast-icon" id="toastIcon"></span>
+      <div class="toast-body">
+        <div class="toast-title" id="toastTitle"></div>
+        <div class="toast-msg"   id="toastMsg"></div>
+      </div>
+    </div>
+
+    <!-- GLOBAL LOADING SCREEN -->
     <div id="globalLoader">
       <div class="coffee" role="img" aria-label="Coffee cup spinning and stretching from side to side">
         <div class="coffee__cup">
@@ -101,65 +146,44 @@
                     <li class='nav-item'><a class='nav-link' href='/menu.html'>Menu</a></li>
                     <li class='nav-item'><a class='nav-link' href='/contact.html'>Book Table</a></li>
                 </ul>
-                <div class='d-flex gap-2 align-items-center'><button id='searchToggle' class='btn btn-outline-light'><i
-                            class='bi bi-search'></i></button><button id='themeToggle' class='btn btn-outline-light'
-                        title='Toggle dark/light mode'><i class='bi bi-sun-fill' id='themeIcon'></i></button><button
-                        id='langToggle' class='btn btn-outline-light' title='Toggle language'><i
-                            class='bi bi-globe'></i></button><a
-                        class='btn btn-outline-light' href='/login.html'>Login</a><a class='btn btn-primary'
-                        href='/register.html'>Register</a>
-                    <a class='btn btn-outline-light position-relative' href='/notifications.html'><i
-                            class='bi bi-bell'></i><span id='notifBadge' class='badge-count'>0</span></a>
-                    <a class='btn btn-outline-light position-relative' href='/wishlist.html'><i
-                            class='bi bi-heart'></i><span id='wishBadge' class='badge-count'>0</span></a>
-                    <a class='btn btn-outline-light position-relative' href='/orders.html'><i
-                            class='bi bi-bag'></i><span id='orderBadge' class='badge-count'>0</span></a>
-                    <a class='btn btn-outline-light position-relative' href='/cart.html'><i class='bi bi-cart'></i><span
-                            id='cartBadge' class='badge-count'>0</span></a>
+                <div class='d-flex gap-2 align-items-center'>
+                    <button id='searchToggle' class='btn btn-outline-light'><i class='bi bi-search'></i></button>
+                    <button id='themeToggle' class='btn btn-outline-light' title='Toggle dark/light mode'><i class='bi bi-sun-fill' id='themeIcon'></i></button>
+                    <button id='langToggle' class='btn btn-outline-light' title='Toggle language'><i class='bi bi-globe'></i></button>
+                    <a class='btn btn-outline-light' href='/login.html'>Login</a>
+                    <a class='btn btn-primary' href='/register.html'>Register</a>
+                    <a class='btn btn-outline-light position-relative' href='/notifications.html'><i class='bi bi-bell'></i><span id='notifBadge' class='badge-count'>0</span></a>
+                    <a class='btn btn-outline-light position-relative' href='/wishlist.html'><i class='bi bi-heart'></i><span id='wishBadge' class='badge-count'>0</span></a>
+                    <a class='btn btn-outline-light position-relative' href='/orders.html'><i class='bi bi-bag'></i><span id='orderBadge' class='badge-count'>0</span></a>
+                    <a class='btn btn-outline-light position-relative' href='/cart.html'><i class='bi bi-cart'></i><span id='cartBadge' class='badge-count'>0</span></a>
                     <a class='btn btn-warning' href='/profile.html'>Profile</a>
-    <script>
-      // Hide global loader after initial data loads
-      (async function hideLoaderWhenReady() {
-        const loader = document.getElementById('globalLoader');
-        if (!loader) return;
-        try {
-          // Wait for categories + products to load
-          await Promise.all([
-            fetch('/api/store/categories').then(r => r.json()),
-            fetch('/api/store/products').then(r => r.json())
-          ]);
-        } catch(e){}
-        // Small delay for smooth transition
-        setTimeout(() => {
-          loader.style.transition = 'opacity 0.4s ease';
-          loader.style.opacity = '0';
-          setTimeout(() => loader.remove(), 400);
-        }, 300);
-      })();
-    </script>
                 </div>
             </div>
         </div>
     </nav>
-    <section class='hero'><img
-            src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=3000&q=80'>
+
+    <section class='hero'>
+        <img src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=3000&q=80'>
         <div class='overlay'>
             <h1>King Food</h1>
             <p>Fresh flavors, fast delivery, premium experience.</p>
         </div>
     </section>
+
     <div class='container py-4'>
         <div id='searchPanel' class='panel p-3 mb-3 d-none'>
             <div class='row g-2'>
                 <div class='col-md-4'><input id='searchInput' class='form-control' placeholder='Search'></div>
                 <div class='col-md-2'><input id='minPrice' type='number' class='form-control' placeholder='Min'></div>
                 <div class='col-md-2'><input id='maxPrice' type='number' class='form-control' placeholder='Max'></div>
-                <div class='col-md-2'><select id='sortBy' class='form-select'>
+                <div class='col-md-2'>
+                    <select id='sortBy' class='form-select'>
                         <option value='relevance'>Relevance</option>
                         <option value='low'>Price Low</option>
                         <option value='high'>Price High</option>
                         <option value='new'>Newest</option>
-                    </select></div>
+                    </select>
+                </div>
                 <div class='col-md-2'><button id='applyFilter' class='btn btn-primary w-100'>Apply</button></div>
             </div>
         </div>
@@ -173,139 +197,68 @@
       <div class="foodimg"><img src="./project/plate1.jpg" alt="" /></div>
       <div class="question">
         <h2>Why people choose us?</h2>
-
         <div class="q-ans">
-          <div>
-            <img src="./project/plate2.png" alt="" background="none"/>
-          </div>
-          <div>
-            <h4>Choose your favourite</h4>
-            <p>Freshly cooked meals with rich flavors you'll love.</p>
-          </div>
+          <div><img src="./project/plate2.png" alt="" background="none"/></div>
+          <div><h4>Choose your favourite</h4><p>Freshly cooked meals with rich flavors you'll love.</p></div>
         </div>
-
         <div class="q-ans">
-          <div>
-            <img
-              src="./project/plate5.jpg"
-              alt=""
-              style="border-radius: 50% 50%"
-            />
-          </div>
-          <div>
-            <h4>Choose your favourite</h4>
-            <p>Tasty and satisfying bites made with quality ingredients.</p>
-          </div>
+          <div><img src="./project/plate5.jpg" alt="" style="border-radius: 50% 50%"/></div>
+          <div><h4>Choose your favourite</h4><p>Tasty and satisfying bites made with quality ingredients.</p></div>
         </div>
-
         <div class="q-ans">
-          <div>
-            <img
-              src="./project/plate6.jpg"
-              alt=""
-              style="border-radius: 50% 50%"
-            />
-          </div>
-          <div>
-            <h4>Choose your favourite</h4>
-            <p>Hot and cheesy favorites prepared to perfection.</p>
-          </div>
+          <div><img src="./project/plate6.jpg" alt="" style="border-radius: 50% 50%"/></div>
+          <div><h4>Choose your favourite</h4><p>Hot and cheesy favorites prepared to perfection.</p></div>
         </div>
       </div>
     </div>
+
     <div class="main_slide3">
       <div class="fav-head">
         <h3>Our Most Popular Dishes</h3>
-        <p>
-          Discover a selection of our most loved dishes, carefully prepared to
-          deliver exceptional taste and quality. Each item is crafted with fresh
-          ingredients, rich flavors, and attention to detail, offering a
-          memorable dining experience that keeps our guests coming back. From
-          classic favorites to signature specialties, these dishes represent the
-          very best of our kitchen.
-        </p>
+        <p>Discover a selection of our most loved dishes, carefully prepared to deliver exceptional taste and quality. Each item is crafted with fresh ingredients, rich flavors, and attention to detail, offering a memorable dining experience that keeps our guests coming back. From classic favorites to signature specialties, these dishes represent the very best of our kitchen.</p>
       </div>
       <div class="fav-food">
         <div class="item">
-          <div>
-            <img src="./project/plate2.png" alt="" style="border-radius: 50% 50%" />
-          </div>
+          <div><img src="./project/plate2.png" alt="" style="border-radius: 50% 50%" /></div>
           <h3>Grilled Chicken</h3>
-          <p>
-            Juicy grilled chicken marinated with special spices, served hot with
-            a rich smoky flavor.
-          </p>
+          <p>Juicy grilled chicken marinated with special spices, served hot with a rich smoky flavor.</p>
         </div>
-
         <div class="item">
-          <div>
-            <img src="./project/plate6.jpg" alt="" />
-          </div>
+          <div><img src="./project/plate6.jpg" alt="" /></div>
           <h3>Crispy Shrimp</h3>
-          <p>
-            Golden crispy shrimp served with a delicious sauce, full of flavor
-            and crunch.
-          </p>
+          <p>Golden crispy shrimp served with a delicious sauce, full of flavor and crunch.</p>
         </div>
-
         <div class="item">
-          <div>
-            <img src="./project/plate5.jpg" alt="" />
-          </div>
+          <div><img src="./project/plate5.jpg" alt="" /></div>
           <h3>Pepperoni Pizza</h3>
-          <p>
-            Freshly baked pizza topped with premium cheese and pepperoni for a
-            perfect taste.
-          </p>
+          <p>Freshly baked pizza topped with premium cheese and pepperoni for a perfect taste.</p>
         </div>
       </div>
       <div class="dsgn"></div>
     </div>
+
     <div class="main_slide4">
       <div class="chef-feed">
-        <h2 style="text-align: center; margin-bottom: 20px">
-          Customer
-          <span style="color: rgb(173, 2, 2)">Feedback </span>
-        </h2>
-        <p style="max-width: 600px; margin: 0 auto">
-          I had a truly exceptional dining experience at this restaurant. The
-          food quality was outstanding, every dish was served fresh, hot, and
-          beautifully presented, with perfectly balanced flavors. The staff were
-          extremely professional, polite, and attentive, and the overall
-          atmosphere was elegant, comfortable, and relaxing. I would highly
-          recommend this restaurant to anyone seeking a premium dining
-          experience with excellent food and service.
-        </p>
+        <h2 style="text-align: center; margin-bottom: 20px">Customer <span style="color: rgb(173, 2, 2)">Feedback</span></h2>
+        <p style="max-width: 600px; margin: 0 auto">I had a truly exceptional dining experience at this restaurant. The food quality was outstanding, every dish was served fresh, hot, and beautifully presented, with perfectly balanced flavors. The staff were extremely professional, polite, and attentive, and the overall atmosphere was elegant, comfortable, and relaxing. I would highly recommend this restaurant to anyone seeking a premium dining experience with excellent food and service.</p>
         <div class="chef-detail">
           <img src="./project/cheef1.jpg" alt="Chef">
-          <div style="text-align: center;">
-            <h6>Developer Dude</h6>
-            <p>Web Developer</p>
-          </div>
+          <div style="text-align: center;"><h6>Developer Dude</h6><p>Web Developer</p></div>
         </div>
-
         <div class="chef-vic">
           <div>
             <i class="fa-solid fa-hand-peace"></i>
             <h4>68</h4>
-            <p>
-              Happy Customers Serving hundreds of satisfied guests with
-              exceptional taste and quality service every day.
-            </p>
+            <p>Happy Customers Serving hundreds of satisfied guests with exceptional taste and quality service every day.</p>
           </div>
           <div>
             <i class="fa-solid fa-trophy"></i>
             <h4>956</h4>
-            <p>
-              Delicious Meals Served Delivering a wide variety of freshly
-              prepared dishes made with passion and the finest ingredients.
-            </p>
+            <p>Delicious Meals Served Delivering a wide variety of freshly prepared dishes made with passion and the finest ingredients.</p>
           </div>
         </div>
       </div>
-      <div class="chef">
-        <img src="./project/cheef1.jpg" alt="" />
-      </div>
+      <div class="chef"><img src="./project/cheef1.jpg" alt="" /></div>
     </div>
 
     <section class='container panel p-4 mb-4'>
@@ -316,58 +269,205 @@
             <div class='col-md-4'><button class='btn btn-primary w-100'>Subscribe</button></div>
         </form>
     </section>
+
     <footer class='multi-footer pt-5 pb-4'>
         <div class='container'>
             <div class='row g-4'>
                 <div class='col-md-3'>
                     <h5>King Food</h5>
                     <p class='text-secondary'>Restaurant experience with admin-themed modern UI.</p>
-                    
-                </div>
-                
-                <div class='col-md-3'>
-                    <h6>Navigation</h6><a href='/home.html'>Home</a><br><a href='/about.html'>About</a><br><a
-                        href='/menu.html'>Menu</a><br><a href='/contact.html'>Book Table</a>
                 </div>
                 <div class='col-md-3'>
-                    <h6>User</h6><a href='/profile.html'>Profile</a><br><a href='/orders.html'>Orders</a><br><a
-                        href='/wishlist.html'>Wishlist</a><br><a href='/notifications.html'>Notifications</a>
+                    <h6>Navigation</h6>
+                    <a href='/home.html'>Home</a><br><a href='/about.html'>About</a><br>
+                    <a href='/menu.html'>Menu</a><br><a href='/contact.html'>Book Table</a>
                 </div>
                 <div class='col-md-3'>
-                    <h6>Support</h6><a href='/support.html'>Help & Support</a><br><a href='/forgot-password.html'>Forgot
-                        Password</a><br>
-                    <div class='social d-flex gap-3 mt-2'><a href='#'><i class='bi bi-facebook'></i></a><a href='#'><i
-                                class='bi bi-instagram'></i></a><a href='https://wa.me/201016447253'><i
-                                class='bi bi-whatsapp'></i></a><a href='#'><i class='bi bi-youtube'></i></a></div>
+                    <h6>User</h6>
+                    <a href='/profile.html'>Profile</a><br><a href='/orders.html'>Orders</a><br>
+                    <a href='/wishlist.html'>Wishlist</a><br><a href='/notifications.html'>Notifications</a>
+                </div>
+                <div class='col-md-3'>
+                    <h6>Support</h6>
+                    <a href='/support.html'>Help & Support</a><br>
+                    <a href='/forgot-password.html'>Forgot Password</a><br>
+                    <div class='social d-flex gap-3 mt-2'>
+                        <a href='#'><i class='bi bi-facebook'></i></a>
+                        <a href='#'><i class='bi bi-instagram'></i></a>
+                        <a href='https://wa.me/201016447253'><i class='bi bi-whatsapp'></i></a>
+                        <a href='#'><i class='bi bi-youtube'></i></a>
+                    </div>
                 </div>
             </div>
         </div>
-        <p class='text-secondary' style="text-align: center; padding: 20px 30px; margin-top: 60px; color: #ffffff;"> All rights reserved © 2026 King Food & Project Team .</p>
+        <p class='text-secondary' style="text-align: center; padding: 20px 30px; margin-top: 60px; color: #ffffff;">
+            All rights reserved © 2026 King Food & Project Team .
+        </p>
     </footer>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isSuccess = urlParams.get('success');
-
-            if (isSuccess === 'true' || isSuccess === true) {
-                localStorage.removeItem('cart');
-                try {
-                    await fetch('/api/user/cart/clear', { method: 'DELETE' });
-                } catch(e) { console.error('Error clearing cart', e); }
-
-                alert('🎉 تم الدفع بنجاح! جاري تحضير طلبك.');
-                
-                window.history.replaceState({}, '', '/home.html');
-            } 
-            else if (isSuccess === 'false' || isSuccess === false) {
-                window.location.href = '/cart.html?payment=failed';
-            }
-        });
-    </script>
 
     <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
     <script src='site.js'></script>
-</body>
 
+    <!-- ✅ Global Loader: يختفي بعد تحميل البيانات -->
+    <script>
+      (async function hideLoaderWhenReady() {
+        const loader = document.getElementById('globalLoader');
+        if (!loader) return;
+        try {
+          await Promise.all([
+            fetch('/api/store/categories').then(r => r.json()),
+            fetch('/api/store/products').then(r => r.json())
+          ]);
+        } catch(e) {}
+        setTimeout(() => {
+          loader.style.transition = 'opacity 0.4s ease';
+          loader.style.opacity = '0';
+          setTimeout(() => loader.remove(), 400);
+        }, 300);
+      })();
+    </script>
+
+    <!-- ✅ PAYMENT RESULT HANDLER — يعمل بعد العودة من Paymob -->
+    <script>
+    (function handlePaymentResult() {
+
+      // ================================================
+      // 1. قراءة الـ URL params القادمة من Paymob
+      // ================================================
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSuccess = urlParams.get('success');
+
+      // لو مفيش success في الـ URL = زيارة عادية — لا تعمل حاجة
+      if (isSuccess === null || isSuccess === undefined || isSuccess === '') return;
+
+      // ================================================
+      // 2. Toast Function
+      // ================================================
+      function showPaymentToast(type, title, msg) {
+        const toast     = document.getElementById('paymentToast');
+        const iconEl    = document.getElementById('toastIcon');
+        const titleEl   = document.getElementById('toastTitle');
+        const msgEl     = document.getElementById('toastMsg');
+        if (!toast) return;
+
+        toast.className      = 'show ' + type;
+        iconEl.textContent   = type === 'success' ? '🎉' : '❌';
+        titleEl.textContent  = title;
+        msgEl.textContent    = msg;
+
+        // إظهار Toast
+        setTimeout(() => toast.classList.add('show'), 50);
+
+        // إخفاء بعد 5 ثواني
+        setTimeout(() => {
+          toast.style.opacity   = '0';
+          toast.style.transform = 'translateX(110%)';
+          setTimeout(() => { toast.className = ''; toast.style = ''; }, 500);
+        }, 5000);
+      }
+
+      // ================================================
+      // 3. Confetti للنجاح
+      // ================================================
+      function fireConfetti() {
+        if (typeof confetti !== 'function') return;
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+        setTimeout(() => confetti({ particleCount: 80, spread: 60, origin: { y: 0.4 } }), 600);
+      }
+
+      // ================================================
+      // 4. تنظيف الـ URL من البيانات الطويلة
+      // ================================================
+      function cleanUrl() {
+        window.history.replaceState({}, document.title, '/home.html');
+      }
+
+      // ================================================
+      // 5. تفريغ السلة من الـ Server
+      // ================================================
+      async function clearCartOnServer() {
+        try {
+          const res = await fetch('/api/user/cart/clear', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (res.ok) {
+            console.log('✅ Cart cleared on server');
+          } else {
+            console.warn('⚠️ Cart clear response:', res.status);
+          }
+        } catch (e) {
+          console.warn('⚠️ Cart clear error (non-fatal):', e.message);
+        }
+      }
+
+      // ================================================
+      // 6. تفريغ السلة من localStorage (لو موجودة)
+      // ================================================
+      function clearCartLocal() {
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartItems');
+        sessionStorage.removeItem('cart');
+      }
+
+      // ================================================
+      // 7. المنطق الرئيسي
+      // ================================================
+      async function processPaymentResult() {
+
+        if (isSuccess === 'true') {
+          // ✅ الدفع نجح
+
+          // تنظيف الـ URL أولاً
+          cleanUrl();
+
+          // تفريغ السلة من كل مكان
+          clearCartLocal();
+          await clearCartOnServer();
+
+          // إطلاق الـ Confetti
+          fireConfetti();
+
+          // إظهار Toast نجاح
+          showPaymentToast(
+            'success',
+            '🎉 Payment Successful!',
+            'Your order has been placed and is being prepared.'
+          );
+
+          console.log('✅ Payment success: cart cleared, confetti fired');
+
+        } else if (isSuccess === 'false') {
+          // ❌ الدفع فشل — روّح للسلة بدون تفريغها
+
+          // تنظيف الـ URL
+          cleanUrl();
+
+          // إظهار Toast فشل بشكل مختصر ثم redirect
+          showPaymentToast(
+            'error',
+            '❌ Payment Failed',
+            'Redirecting you back to cart to try again...'
+          );
+
+          console.warn('❌ Payment failed: redirecting to cart');
+
+          // redirect بعد 2 ثانية حتى يرى المستخدم الرسالة
+          setTimeout(() => {
+            window.location.href = '/cart.html?payment=failed';
+          }, 2000);
+        }
+      }
+
+      // تشغيل المنطق بعد تحميل الصفحة
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', processPaymentResult);
+      } else {
+        processPaymentResult();
+      }
+
+    })();
+    </script>
+
+</body>
 </html>
