@@ -403,7 +403,11 @@ async function initiatePayment() {
         btn.style.display = 'none';
 
         window.addEventListener('message', onPaymentMessage);
+        
+        // Load the Paymob iframe - it will redirect to /payment-finished upon completion
         iframe.src = data.iframeUrl;
+        
+        // Start polling for transaction status
         startPolling();
 
     } catch (e) {
@@ -468,14 +472,13 @@ function handleSuccess() {
         setTimeout(() => confetti({ particleCount: 100, spread: 60, origin: { y: 0.4 } }), 400);
     }
 
+    // Clear the cart from server immediately for instant UI feedback
+    clearCartFromServer();
+
+    // Redirect to home.html after short delay
     setTimeout(() => {
-        const btn = document.getElementById('payBtn');
-        btn.style.display = 'block';
-        btn.disabled = false;
-        btn.className = 'btn btn-success w-100 py-3 fw-bold';
-        btn.innerHTML = '<i class="bi bi-check-circle me-2"></i> ' + __('pay_success_msg') + ' <a href="/home.html" class="ms-2 text-white">' + __('pay_continue') + '</a>';
-        btn.onclick = null;
-    }, 1200);
+        window.location.href = '/home.html';
+    }, 1500);
 }
 
 // ---- Handle failure ----
@@ -485,17 +488,34 @@ function handleFailure() {
 
     showToast(__('pay_fail_msg'), false);
 
+    // Do NOT clear the cart on failure - user should be able to retry
+    // Redirect to cart.html after short delay so user can retry
     setTimeout(() => {
-        const btn = document.getElementById('payBtn');
-        btn.style.display = 'block';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>' + __('pay_retry');
-        btn.onclick = initiatePayment;
-
-        const area = document.getElementById('iframeArea');
-        area.classList.add('iframe-hidden');
-        document.getElementById('paymobIframe').src = '';
+        window.location.href = '/cart.html';
     }, 1500);
+}
+
+// ---- Clear cart from server (API call) ----
+async function clearCartFromServer() {
+    try {
+        // Call API to clear cart from database
+        await fetch('/api/user/cart/clear', { method: 'POST' });
+        
+        // Also clear local storage
+        localStorage.removeItem('cart');
+        sessionStorage.removeItem('cart');
+        
+        // Dispatch event to notify other parts of the app
+        window.dispatchEvent(new Event('cartCleared'));
+        
+        console.log('[Payment] Cart cleared successfully');
+    } catch (e) {
+        console.error('[Payment] Failed to clear cart:', e);
+        // Still clear local storage as fallback
+        localStorage.removeItem('cart');
+        sessionStorage.removeItem('cart');
+        window.dispatchEvent(new Event('cartCleared'));
+    }
 }
 
 // ---- Init ----
