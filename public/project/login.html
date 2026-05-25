@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="shortcut icon" href="ovio.jpg" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Ovio</title>
+    <style>
+      .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgb(12, 11, 11);
+        padding: 60px 20px;
+      }
+
+      .auth-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 50px;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .auth-card .logo {
+        margin-bottom: 30px;
+      }
+
+      .auth-card .logo img {
+        width: 100px;
+      }
+
+      .auth-card h1 {
+        color: rgb(95, 32, 32);
+        font-size: 32px;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .auth-card p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        text-align: left;
+      }
+
+      .form-group label {
+        display: block;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus {
+        border-color: rgb(176, 34, 32);
+      }
+
+      .form-group input::placeholder {
+        color: #999;
+      }
+
+      .auth-btn {
+        width: 100%;
+        padding: 15px;
+        background-color: rgb(176, 34, 32);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(176, 34, 32, 0.3);
+      }
+
+      .auth-btn:hover {
+        background-color: rgb(143, 27, 27);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(176, 34, 32, 0.4);
+      }
+
+      .auth-footer {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #eee;
+      }
+
+      .auth-footer p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+
+      .auth-footer a {
+        color: rgb(176, 34, 32);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .auth-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .error-message {
+        color: rgb(176, 34, 32);
+        font-size: 13px;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .form-group input.error {
+        border-color: rgb(176, 34, 32);
+      }
+
+      @media only screen and (max-width: 768px) {
+        .auth-card {
+          padding: 35px 25px;
+        }
+
+        .auth-card h1 {
+          font-size: 26px;
+        }
+
+        .auth-card p {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="header">
+        <div class="headerbar">
+          <div class="account">
+            <ul>
+              <a href="project.html">
+                <li><i class="fa-solid fa-house-chimney"></i></li>
+              </a>
+              <a href="#">
+                <li>
+                  <i
+                    class="fa-solid fa-magnifying-glass searchicon"
+                    id="searchicon1"
+                  ></i>
+                </li>
+              </a>
+              <a href="login.html">
+                <li><i class="fa-solid fa-user" id="user-mb"></i></li>
+              </a>
+            </ul>
+            <div class="search" id="searchinput1">
+              <input type="search" placeholder="Search menu..." />
+              <i class="fa-solid fa-magnifying-glass srchicon"></i>
+            </div>
+          </div>
+          <div class="nav">
+            <ul>
+              <a href="project.html">
+                <li>Home</li>
+              </a>
+              <a href="about.html" class="about">
+                <li>About</li>
+              </a>
+              <a href="menu.html" class="food">
+                <li>Food Menu</li>
+              </a>
+              <a href="contact.html">
+                <li>Book Table</li>
+              </a>
+            </ul>
+          </div>
+        </div>
+
+        <div class="logo"><img src="ovio.jpg" alt="" /></div>
+        <div class="bar">
+          <i class="fa-solid fa-bars"></i>
+          <i class="fa-solid fa-xmark" id="hdcross"></i>
+        </div>
+        <div class="nav">
+          <ul>
+            <a href="project.html">
+              <li>Home</li>
+            </a>
+            <a href="about.html">
+              <li>About</li>
+            </a>
+            <a href="menu.html" class="foodpc">
+              <li>Food Menu</li>
+            </a>
+            <a href="contact.html">
+              <li>Book Table</li>
+            </a>
+          </ul>
+        </div>
+        <div class="account">
+          <ul>
+            <a href="project.html">
+              <li><i class="fa-solid fa-house-chimney"></i></li>
+            </a>
+            <a href="#">
+              <li>
+                <i
+                  class="fa-solid fa-magnifying-glass searchicon"
+                  id="searchicon2"
+                ></i>
+              </li>
+            </a>
+            <a href="login.html">
+              <li><i class="fa-solid fa-user" id="user-lap"></i></li>
+            </a>
+          </ul>
+          <div class="search" id="searchinput2">
+            <input type="search" placeholder="Search menu..." />
+            <i class="fa-solid fa-magnifying-glass srchicon"></i>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="logo">
+          <img src="ovio.jpg" alt="Ovio Logo" />
+        </div>
+        <h1>Welcome Back</h1>
+        <p>Sign in to your account to continue</p>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              required
+            />
+            <div class="error-message" id="emailError">
+              Please enter a valid email address
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+            />
+            <div class="error-message" id="passwordError">
+              Password must be at least 6 characters
+            </div>
+          </div>
+
+          <button type="submit" class="auth-btn">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Don't have an account? <a href="#">Register here</a></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email");
+          const password = document.getElementById("password");
+          const emailError = document.getElementById("emailError");
+          const passwordError = document.getElementById("passwordError");
+
+          let isValid = true;
+
+          // Email validation
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email.value)) {
+            email.classList.add("error");
+            emailError.style.display = "block";
+            isValid = false;
+          } else {
+            email.classList.remove("error");
+            emailError.style.display = "none";
+          }
+
+          // Password validation
+          if (password.value.length < 6) {
+            password.classList.add("error");
+            passwordError.style.display = "block";
+            isValid = false;
+          } else {
+            password.classList.remove("error");
+            passwordError.style.display = "none";
+          }
+
+          if (isValid) {
+            // Simulate login success
+            alert("Login successful! (Frontend demo only)");
+            window.location.href = "project.html";
+          }
+        });
+
+      // Remove error styling on input
+      document.getElementById("email").addEventListener("input", function () {
+        this.classList.remove("error");
+        document.getElementById("emailError").style.display = "none";
+      });
+
+      document
+        .getElementById("password")
+        .addEventListener("input", function () {
+          this.classList.remove("error");
+          document.getElementById("passwordError").style.display = "none";
+        });
+    </script>
+  </body>
+</html>
