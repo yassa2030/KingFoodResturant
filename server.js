@@ -23,7 +23,6 @@ process.on('uncaughtException', (err) => {
   ];
   if (mongoErrors.includes(err.name)) {
     console.error(`⚠️ MongoDB non-fatal error [${err.name}]: ${err.message}`);
-    // لا توقف الـ server — mongoose سيعيد الاتصال تلقائياً
   } else {
     console.error('❌ FATAL uncaughtException:', err);
     process.exit(1);
@@ -61,14 +60,14 @@ async function connectMongo() {
   try {
     await mongoose.connect(MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 0,              // ✅ 0 = لا timeout على الـ socket نهائياً
+      socketTimeoutMS: 0,
       connectTimeoutMS: 30000,
-      family: 4,                        // ✅ IPv4 فقط
-      heartbeatFrequencyMS: 30000,      // ✅ فحص الاتصال كل 30 ثانية
-      minHeartbeatFrequencyMS: 10000,   // ✅ حد أدنى 10 ثواني
-      maxPoolSize: 5,                   // ✅ تقليل الـ connections على Free Tier
+      family: 4,
+      heartbeatFrequencyMS: 30000,
+      minHeartbeatFrequencyMS: 10000,
+      maxPoolSize: 5,
       minPoolSize: 1,
-      maxIdleTimeMS: 30000,             // ✅ يغلق connections خاملة بعد 30 ثانية
+      maxIdleTimeMS: 30000,
       retryWrites: true,
       retryReads: true
     });
@@ -83,7 +82,6 @@ async function connectMongo() {
     });
 
     mongoose.connection.on('error', (err) => {
-      // لا تُوقف الـ server — فقط سجّل الخطأ
       console.error('⚠️ MongoDB connection error (non-fatal):', err.message);
     });
 
@@ -184,7 +182,6 @@ const notificationSchema = new mongoose.Schema(
     title: String,
     message: String,
     actionLink: String
-    // isRead removed - now tracked per-user via NotificationRead collection
   },
   { timestamps: true }
 );
@@ -857,6 +854,7 @@ app.post('/api/user/cart/apply-coupon', authOnly, async (req, res) => {
     res.status(500).json({ message: 'Failed to apply coupon' });
   }
 });
+
 app.delete('/api/user/cart', authOnly, async (req, res) => {
   try {
     const { productId } = req.body;
@@ -869,29 +867,20 @@ app.delete('/api/user/cart', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// Clear entire cart (for payment success)
-app.post('/api/user/cart/clear', authOnly, async (req, res) => {
+// ✅ تم إضافة مسار تفريغ السلة بالكامل بعد الدفع هنا
+app.delete('/api/user/cart/clear', authOnly, async (req, res) => {
   try {
     const c = await Cart.findOne({ user: req.session.userId });
-    if (!c || !c.items.length) return res.json({ items: [], message: 'Cart already empty' });
-    
-    // Store order info before clearing if needed for logging
-    const itemCount = c.items.length;
-    
-    // Clear all cart items and discount info
-    c.items = [];
-    c.appliedCoupon = null;
-    c.discountAmount = 0;
-    c.discountCode = null;
-    await c.save();
-    
-    await logUserAction(`Cart cleared after successful payment (items: ${itemCount})`, 'cart', req);
-    console.log(`[Cart Clear] User ${req.session.userId} cart cleared successfully`);
-    
-    res.json({ items: [], message: 'Cart cleared successfully' });
-  } catch (e) { 
-    console.error('[Cart Clear] Error:', e.message);
-    res.status(500).json({ message: e.message }); 
+    if (c) {
+      c.items = [];
+      c.appliedCoupon = null;
+      c.discountAmount = 0;
+      c.discountCode = null;
+      await c.save();
+    }
+    res.json({ ok: true, message: 'Cart cleared' });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -1461,8 +1450,7 @@ app.post('/api/payment/paymob/initiate', authOnly, async (req, res) => {
     const paymobOrderId = orderData.id;
     if (!paymobOrderId) throw new Error('No order ID received from Paymob');
 
-    // Step 3: Get payment key with callback URLs
-    const callbackBaseUrl = process.env.CALLBACK_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    // Step 3: Get payment key
     const paymentKeyData = await httpsPost('https://accept.paymob.com/api/acceptance/payment_keys', {
       auth_token: token,
       amount_cents: totalCents,
@@ -1484,10 +1472,7 @@ app.post('/api/payment/paymob/initiate', authOnly, async (req, res) => {
         state: 'NA'
       },
       currency: 'EGP',
-      integration_id: 5688130,
-      callback: `${callbackBaseUrl}/api/payment/paymob/callback`,
-      success_url: `${callbackBaseUrl}/payment-finished?success=true&tx_id={transaction_id}`,
-      fail_url: `${callbackBaseUrl}/payment-finished?success=false&tx_id={transaction_id}`
+      integration_id: 5688130
     });
 
     const paymentToken = paymentKeyData.token;
@@ -1509,8 +1494,7 @@ app.post('/api/payment/paymob/initiate', authOnly, async (req, res) => {
         price: i.product?.price
       })),
       customerEmail: user.email,
-      customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-      shippingAddress: shippingAddress || 'Cairo, Egypt'
+      customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
     });
 
     res.json({
@@ -1534,61 +1518,38 @@ app.post('/api/payment/paymob/callback', async (req, res) => {
     const data = req.body;
     const paymobOrderId = data.order?.id;
     const transactionId = data.id;
-    const success = data.success === true || data.success === 'true' || data.success === 1;
-    const pending = data.pending === true || data.pending === 'true' || data.pending === 1;
-    
-    // Determine final status based on Paymob response
-    let status;
-    if (success && !pending) {
-      status = 'success';
-    } else if (!success || pending) {
-      status = 'failed';
-    } else {
-      status = 'pending';
-    }
+    const success = data.success === true || data.success === 'true';
+    const status = success ? 'success' : 'failed';
     
     const transaction = await Transaction.findOne({ paymobOrderId });
     if (transaction) {
-      // Only update if status changed to avoid redundant saves
-      if (transaction.status !== status) {
-        transaction.status = status;
-        transaction.paymobTransactionId = transactionId;
-        transaction.paymentMethod = data.source_data?.type || 'card';
-        transaction.rawResponse = data;
-        await transaction.save();
-        
-        console.log(`[Paymob Callback] Transaction ${transaction.orderNo} updated to: ${status}`);
-      }
+      transaction.status = status;
+      transaction.paymobTransactionId = transactionId;
+      transaction.paymentMethod = data.source_data?.type || 'card';
+      transaction.rawResponse = data;
+      await transaction.save();
 
-      // If successful payment, clear cart and create order
-      if (status === 'success') {
+      if (success) {
         const cart = await Cart.findOne({ user: transaction.user });
-        if (cart && cart.items.length > 0) {
-          // Create the order in database
+        if (cart) {
           await Order.create({
             orderNo: transaction.orderNo,
             user: transaction.user,
             customerName: transaction.customerName,
             customerEmail: transaction.customerEmail,
-            shippingAddress: transaction.shippingAddress || 'Cairo, Egypt',
             items: transaction.items,
-                shippingAddress: transaction.shippingAddress || 'Cairo, Egypt',
             total: transaction.amount,
             status: 'processing'
           });
-          
-          // Clear the cart completely
           cart.items = [];
           cart.appliedCoupon = null;
           cart.discountAmount = 0;
           cart.discountCode = null;
           await cart.save();
-          
-          console.log(`[Paymob Callback] Cart cleared for user ${transaction.user}, Order ${transaction.orderNo} created`);
         }
       }
     }
-    res.json({ received: true, status: status });
+    res.json({ received: true });
   } catch (e) {
     console.error('Paymob callback error:', e);
     res.status(500).json({ message: e.message });
@@ -1596,72 +1557,13 @@ app.post('/api/payment/paymob/callback', async (req, res) => {
 });
 
 // Iframe redirect after payment completion (detected by iframe navigation)
-app.get('/payment-finished', async (req, res) => {
+app.get('/payment-finished', (req, res) => {
   const { success, tx_id } = req.query;
-  const isSuccess = success === 'true' || success === '1';
-  
-  // Update transaction status based on the result from Paymob
-  if (tx_id) {
-    try {
-      const transaction = await Transaction.findById(tx_id);
-      if (transaction) {
-        const newStatus = isSuccess ? 'success' : 'failed';
-        if (transaction.status !== newStatus) {
-          transaction.status = newStatus;
-          transaction.rawResponse = { ...transaction.rawResponse, payment_finished_query: req.query };
-          await transaction.save();
-          
-          console.log(`[Payment Finished] Transaction ${transaction.orderNo} updated to: ${newStatus}`);
-          
-          // If successful, clear the cart and create order
-          if (isSuccess) {
-            const cart = await Cart.findOne({ user: transaction.user });
-            if (cart && cart.items.length > 0) {
-              await Order.create({
-                orderNo: transaction.orderNo,
-                user: transaction.user,
-                customerName: transaction.customerName,
-                customerEmail: transaction.customerEmail,
-                shippingAddress: transaction.shippingAddress || 'Cairo, Egypt',
-                items: transaction.items,
-                total: transaction.amount,
-                status: 'processing'
-              });
-              cart.items = [];
-              cart.appliedCoupon = null;
-              cart.discountAmount = 0;
-              cart.discountCode = null;
-              await cart.save();
-              
-              console.log(`[Payment Finished] Cart cleared for user ${transaction.user}, Order ${transaction.orderNo} created`);
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error updating transaction from payment-finished:', e.message);
+  res.send(`<!doctype html><html><body><script>
+    if (window.parent) {
+      window.parent.postMessage({ type: 'paymob_result', success: ${!!success}, transactionId: ${tx_id || 'null'} }, '*');
     }
-  }
-  
-  // Define redirect URL based on payment result
-  const redirectUrl = isSuccess ? '/home.html' : '/cart.html';
-  
-  res.send(`<!doctype html><html><head><meta charset="UTF-8"><title>${isSuccess ? 'Approved' : 'Error Occured'}</title><style>body{font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:${isSuccess ? '#f0fdf4' : '#fef2f2'};}div{text-align:center;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1);max-width:400px;}h1{font-size:2rem;margin:0 0 1rem;color:${isSuccess ? '#16a34a' : '#dc2626'};}p{color:#6b7280;margin:0 0 1.5rem;line-height:1.5;}.icon{font-size:4rem;margin-bottom:1rem;}</style></head><body><div><div class="icon">${isSuccess ? '✅' : '❌'}</div><h1>${isSuccess ? 'Approved' : 'Error Occured'}</h1><p>${isSuccess ? 'Thank you for using the online payment service.<br>Your payment was successful!' : 'Thank you for using the online payment service.<br>Something went wrong! If this problem persists, please contact your service provider.'}</p></div><script>
-    // Notify parent window immediately
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'paymob_result', success: ${isSuccess}, transactionId: '${tx_id || ''}' }, '*');
-    }
-    // Also try to notify opener if exists
-    if (window.opener && !window.opener.closed) {
-      window.opener.postMessage({ type: 'paymob_result', success: ${isSuccess}, transactionId: '${tx_id || ''}' }, '*');
-    }
-    // Log for debugging
-    console.log('[Payment Finished] Message sent, success=' + ${isSuccess});
-    // Redirect after a short delay to show the result page
-    setTimeout(() => {
-      window.location.href = '${redirectUrl}';
-    }, 2000);
-  <\\/script></body></html>`);
+  <\/script></body></html>`);
 });
 
 // Get transaction status
