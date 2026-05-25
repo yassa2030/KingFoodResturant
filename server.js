@@ -54,7 +54,7 @@ if (!MONGO_URI) throw new Error('MONGO_URI is required.');
 mongoose.set('strictQuery', false);
 
 // =====================================================================
-// ✅ CONNECT MONGO — ثابت لا يوقف الـ server أبداً
+// ✅ CONNECT MONGO
 // =====================================================================
 async function connectMongo() {
   try {
@@ -74,13 +74,11 @@ async function connectMongo() {
     console.log('✅ Mongo connected');
 
     mongoose.connection.on('disconnected', () => {
-      console.log('⚠️ MongoDB disconnected — Auto Reconnaction....');
+      console.log('⚠️ MongoDB disconnected — Auto Reconnection....');
     });
-
     mongoose.connection.on('reconnected', () => {
       console.log('✅ MongoDB reconnected successfully');
     });
-
     mongoose.connection.on('error', (err) => {
       console.error('⚠️ MongoDB connection error (non-fatal):', err.message);
     });
@@ -94,6 +92,9 @@ async function connectMongo() {
 }
 // =====================================================================
 
+// =====================================================================
+// SCHEMAS
+// =====================================================================
 const userSchema = new mongoose.Schema(
   {
     firstName: String,
@@ -268,21 +269,17 @@ const transactionSchema = new mongoose.Schema(
     }],
     customerEmail: String,
     customerName: String,
-    successUrl: String,
-    failUrl: String,
     rawResponse: Object
   },
   { timestamps: true }
 );
 
-// Per-user tour state (isolated by email)
 const userTourStateSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   tourCompleted: { type: Boolean, default: false },
   completedAt: Date
 }, { timestamps: true });
 
-// Per-notification read status per user (isolated by email)
 const notificationReadSchema = new mongoose.Schema({
   notification: { type: mongoose.Schema.Types.ObjectId, ref: 'Notification', required: true },
   userEmail: { type: String, required: true, lowercase: true },
@@ -291,27 +288,33 @@ const notificationReadSchema = new mongoose.Schema({
 }, { timestamps: true });
 notificationReadSchema.index({ notification: 1, userEmail: 1 }, { unique: true });
 
-const User          = mongoose.model('User', userSchema);
-const Category      = mongoose.model('Category', categorySchema);
-const Product       = mongoose.model('Product', productSchema);
-const Order         = mongoose.model('Order', orderSchema);
-const Coupon        = mongoose.model('Coupon', couponSchema);
-const Notification  = mongoose.model('Notification', notificationSchema);
-const AdminLog      = mongoose.model('AdminLog', logSchema);
-const UserProfile   = mongoose.model('UserProfile', profileSchema);
-const UserAddress   = mongoose.model('UserAddress', addressSchema);
-const PaymentMethod = mongoose.model('PaymentMethod', paymentSchema);
-const Wishlist      = mongoose.model('Wishlist', wishlistSchema);
-const Cart          = mongoose.model('Cart', cartSchema);
-const TableBooking  = mongoose.model('TableBooking', bookingSchema);
-const Conversation  = mongoose.model('Conversation', conversationSchema);
-const Newsletter    = mongoose.model('Newsletter', newsletterSchema);
-const CouponUse     = mongoose.model('CouponUse', couponUseSchema);
-const ChatSession = mongoose.model('ChatSession', chatSessionSchema);
-const UserTourState = mongoose.model('UserTourState', userTourStateSchema);
+// =====================================================================
+// MODELS
+// =====================================================================
+const User             = mongoose.model('User', userSchema);
+const Category         = mongoose.model('Category', categorySchema);
+const Product          = mongoose.model('Product', productSchema);
+const Order            = mongoose.model('Order', orderSchema);
+const Coupon           = mongoose.model('Coupon', couponSchema);
+const Notification     = mongoose.model('Notification', notificationSchema);
+const AdminLog         = mongoose.model('AdminLog', logSchema);
+const UserProfile      = mongoose.model('UserProfile', profileSchema);
+const UserAddress      = mongoose.model('UserAddress', addressSchema);
+const PaymentMethod    = mongoose.model('PaymentMethod', paymentSchema);
+const Wishlist         = mongoose.model('Wishlist', wishlistSchema);
+const Cart             = mongoose.model('Cart', cartSchema);
+const TableBooking     = mongoose.model('TableBooking', bookingSchema);
+const Conversation     = mongoose.model('Conversation', conversationSchema);
+const Newsletter       = mongoose.model('Newsletter', newsletterSchema);
+const CouponUse        = mongoose.model('CouponUse', couponUseSchema);
+const ChatSession      = mongoose.model('ChatSession', chatSessionSchema);
+const UserTourState    = mongoose.model('UserTourState', userTourStateSchema);
 const NotificationRead = mongoose.model('NotificationRead', notificationReadSchema);
-const Transaction = mongoose.model('Transaction', transactionSchema);
+const Transaction      = mongoose.model('Transaction', transactionSchema);
 
+// =====================================================================
+// MIDDLEWARE
+// =====================================================================
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -347,6 +350,9 @@ const CATEGORY_FALLBACK_IMAGES = {
   desserts: 'https://goldbelly.imgix.net/uploads/showcase_media_asset/image/132029/german-chocolate-killer-brownie-tin-pack.5ebc34160f28767a9d94c4da2e04c4b9.jpg?ixlib=react-9.0.2&auto=format&ar=1%3A1'
 };
 
+// =====================================================================
+// HELPERS
+// =====================================================================
 async function writeLog(action, opts = {}) {
   try {
     await AdminLog.create({ action, email: opts.email || '', actionType: opts.actionType || '', userAgent: opts.userAgent || '', ip: opts.ip || '' });
@@ -604,38 +610,30 @@ app.delete('/api/admin/coupons/:id', adminOnly, async (req, res) => {
   try { await Coupon.findByIdAndDelete(req.params.id); await writeLog(`Coupon deleted: ${req.params.id}`); res.json({ ok: true }); } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.get('/api/admin/notifications', adminOnly, async (_req, res) => {
-  try { res.json(await Notification.find().populate('user').sort({ createdAt: -1 })); } catch (e) { res.status(500).json({ message: e.message }); }
-});
-app.post('/api/admin/notifications', adminOnly, async (req, res) => {
-  try {
-    const doc = await Notification.create(req.body);
-    await writeLog(`Notification sent: ${doc.title}`);
-    res.status(201).json(doc);
-  } catch (e) { res.status(500).json({ message: e.message }); }
-});
-
-// Admin: get notifications with per-user read counts
+// ✅ Admin notifications — single route with read counts (duplicate removed)
 app.get('/api/admin/notifications', adminOnly, async (_req, res) => {
   try {
     const notifs = await Notification.find().populate('user').sort({ createdAt: -1 }).lean();
     const notifIds = notifs.map(n => n._id);
     const readRecords = await NotificationRead.find({ notification: { $in: notifIds } }).lean();
-
-    // Count unique users who read each notification
     const readCountMap = {};
     readRecords.forEach(r => {
       const nid = String(r.notification);
       if (!readCountMap[nid]) readCountMap[nid] = new Set();
       if (r.isRead) readCountMap[nid].add(r.userEmail);
     });
-
     const enriched = notifs.map(n => ({
       ...n,
       readCount: readCountMap[String(n._id)] ? readCountMap[String(n._id)].size : 0
     }));
-
     res.json(enriched);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+app.post('/api/admin/notifications', adminOnly, async (req, res) => {
+  try {
+    const doc = await Notification.create(req.body);
+    await writeLog(`Notification sent: ${doc.title}`);
+    res.status(201).json(doc);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 app.put('/api/admin/notifications/:id', adminOnly, async (req, res) => {
@@ -667,30 +665,23 @@ app.get('/api/admin/analytics', adminOnly, async (req, res) => {
     const days   = range === '365d' ? 365 : range === '30d' ? 30 : 7;
     const start  = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const orders = await Order.find({ createdAt: { $gte: start } });
-    const totalRevenue   = orders.reduce((s, o) => s + (o.total || 0), 0);
-    const totalOrders    = orders.length;
-    const avgOrderValue  = totalOrders ? totalRevenue / totalOrders : 0;
-    const totalUsers     = await User.countDocuments();
-    const regularUsers   = await User.countDocuments({ role: 'user' });
-
-    const byStatus   = ['processing', 'shipping', 'delivered', 'cancelled'].map(s => ({ status: s, count: orders.filter(o => o.status === s).length }));
-    const topSelling = await Order.aggregate([
+    const totalRevenue  = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const totalOrders   = orders.length;
+    const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
+    const totalUsers    = await User.countDocuments();
+    const regularUsers  = await User.countDocuments({ role: 'user' });
+    const byStatus      = ['processing', 'shipping', 'delivered', 'cancelled'].map(s => ({ status: s, count: orders.filter(o => o.status === s).length }));
+    const topSelling    = await Order.aggregate([
       { $unwind: '$items' },
       { $group: { _id: '$items.name', sold: { $sum: '$items.qty' }, revenue: { $sum: { $multiply: ['$items.qty', '$items.price'] } } } },
       { $sort: { sold: -1 } },
       { $limit: 5 }
     ]);
-
     const revenueSeries = [];
     for (let i = days - 1; i >= 0; i--) {
-      const dayStart = new Date();
-      dayStart.setHours(0, 0, 0, 0);
-      dayStart.setDate(dayStart.getDate() - i);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setHours(23, 59, 59, 999);
-      const dayRevenue = orders
-        .filter(o => o.createdAt >= dayStart && o.createdAt <= dayEnd)
-        .reduce((s, o) => s + (o.total || 0), 0);
+      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0); dayStart.setDate(dayStart.getDate() - i);
+      const dayEnd   = new Date(dayStart); dayEnd.setHours(23, 59, 59, 999);
+      const dayRevenue = orders.filter(o => o.createdAt >= dayStart && o.createdAt <= dayEnd).reduce((s, o) => s + (o.total || 0), 0);
       revenueSeries.push({ label: dayStart.toISOString().slice(0, 10), revenue: dayRevenue });
     }
     res.json({ totalRevenue, totalOrders, avgOrderValue, totalUsers, regularUsers, byStatus, topSelling, revenueSeries });
@@ -816,38 +807,28 @@ app.post('/api/user/cart/apply-coupon', authOnly, async (req, res) => {
   try {
     const rawCode = (req.body.code || '').trim();
     if (!rawCode) return res.status(400).json({ message: 'Code is required' });
-
     const coupon = await Coupon.findOne({
       code: { $regex: new RegExp(`^${rawCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
       isActive: true
     });
     if (!coupon) return res.status(400).json({ message: 'Invalid or expired promo code' });
-
     const used = await CouponUse.findOne({ user: req.session.userId, coupon: coupon._id });
     if (used) return res.status(400).json({ message: 'You have already used this coupon' });
-
     const cart = await Cart.findOne({ user: req.session.userId }).populate('items.product');
     if (!cart || cart.items.length === 0) return res.status(400).json({ message: 'Cart is empty' });
-
     const subtotal = cart.items.reduce((s, i) => s + i.qty * (i.product?.price || 0), 0);
     if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount)
       return res.status(400).json({ message: `Minimum order amount is $${coupon.minOrderAmount}` });
     if (coupon.maxUses && coupon.usageCount >= coupon.maxUses)
       return res.status(400).json({ message: 'Coupon maximum usage reached' });
-
-    const discount = coupon.discountType === 'percentage'
-      ? (subtotal * coupon.discountValue / 100)
-      : coupon.discountValue;
-
+    const discount = coupon.discountType === 'percentage' ? (subtotal * coupon.discountValue / 100) : coupon.discountValue;
     cart.appliedCoupon  = coupon._id;
     cart.discountAmount = discount;
     cart.discountCode   = coupon.code;
     await cart.save();
-
     await CouponUse.create({ user: req.session.userId, coupon: coupon._id });
     coupon.usageCount = (coupon.usageCount || 0) + 1;
     await coupon.save();
-
     await logUserAction(`Coupon applied: ${coupon.code} discount=$${discount.toFixed(2)}`, 'coupon', req);
     res.json({ discount, finalTotal: subtotal - discount, appliedCoupon: coupon.code, message: 'Coupon applied successfully' });
   } catch (e) {
@@ -855,6 +836,7 @@ app.post('/api/user/cart/apply-coupon', authOnly, async (req, res) => {
   }
 });
 
+// ✅ FIX 1: حذف منتج واحد من السلة (موجود)
 app.delete('/api/user/cart', authOnly, async (req, res) => {
   try {
     const { productId } = req.body;
@@ -867,24 +849,25 @@ app.delete('/api/user/cart', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// ✅ تم إضافة مسار تفريغ السلة بالكامل بعد الدفع هنا
+// ✅ FIX 2 (جديد): تفريغ السلة كاملة بعد نجاح الدفع
 app.delete('/api/user/cart/clear', authOnly, async (req, res) => {
   try {
-    const c = await Cart.findOne({ user: req.session.userId });
-    if (c) {
-      c.items = [];
-      c.appliedCoupon = null;
-      c.discountAmount = 0;
-      c.discountCode = null;
-      await c.save();
+    const cart = await Cart.findOne({ user: req.session.userId });
+    if (cart) {
+      cart.items         = [];
+      cart.appliedCoupon = null;
+      cart.discountAmount = 0;
+      cart.discountCode  = null;
+      await cart.save();
     }
-    res.json({ ok: true, message: 'Cart cleared' });
+    await logUserAction('Cart cleared after successful payment', 'cart', req);
+    res.json({ ok: true, message: 'Cart cleared successfully' });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
 });
 
-// ===== TOUR GUIDE PER-USER ENDPOINTS =====
+// TOUR
 app.get('/api/user/tour-status', authOnly, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -893,7 +876,6 @@ app.get('/api/user/tour-status', authOnly, async (req, res) => {
     res.json({ tourCompleted: state?.tourCompleted || false });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
-
 app.post('/api/user/tour-complete', authOnly, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -907,10 +889,7 @@ app.post('/api/user/tour-complete', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// =====================================================================
-// USER ROUTES
-// =====================================================================
-
+// ORDERS
 app.post('/api/user/orders/checkout', authOnly, async (req, res) => {
   try {
     const c = await Cart.findOne({ user: req.session.userId }).populate('items.product');
@@ -930,10 +909,7 @@ app.post('/api/user/orders/checkout', authOnly, async (req, res) => {
       subtotal, shipping, tax, total,
       discount: c.discountAmount, discountCode: c.discountCode, status: 'processing'
     });
-    c.items         = [];
-    c.appliedCoupon = null;
-    c.discountAmount = 0;
-    c.discountCode  = null;
+    c.items = []; c.appliedCoupon = null; c.discountAmount = 0; c.discountCode = null;
     await c.save();
     await logUserAction(`Order placed: ${order.orderNo} total=$${total.toFixed(2)}`, 'order', req);
     res.json(order);
@@ -943,23 +919,18 @@ app.post('/api/user/orders/from-chat', authOnly, async (req, res) => {
   try {
     const { items, addressId } = req.body;
     if (!items || !items.length) return res.status(400).json({ message: 'No items' });
-    const u        = await User.findById(req.session.userId);
-    const enriched = [];
-    let subtotal   = 0;
+    const u = await User.findById(req.session.userId);
+    const enriched = []; let subtotal = 0;
     for (const item of items) {
       const product = await Product.findById(item.id);
       if (!product) continue;
-      const price = product.price || 0;
-      const qty   = item.qty || 1;
+      const price = product.price || 0; const qty = item.qty || 1;
       enriched.push({ product: product._id, name: product.name, qty, price });
       subtotal += price * qty;
     }
     if (!enriched.length) return res.status(400).json({ message: 'No valid products' });
-    const shipping = 10;
-    const tax      = subtotal * 0.14;
-    const total    = subtotal + shipping + tax;
-    let shippingAddress = '';
-    let addrObj = null;
+    const shipping = 10; const tax = subtotal * 0.14; const total = subtotal + shipping + tax;
+    let shippingAddress = ''; let addrObj = null;
     if (addressId) addrObj = await UserAddress.findOne({ _id: addressId, user: req.session.userId });
     if (!addrObj)  addrObj = await UserAddress.findOne({ user: req.session.userId, isDefault: true });
     if (addrObj)   shippingAddress = `${addrObj.streetAddress}, ${addrObj.city}${addrObj.country ? ', ' + addrObj.country : ''}`;
@@ -967,8 +938,7 @@ app.post('/api/user/orders/from-chat', authOnly, async (req, res) => {
       orderNo: `ORD-${Date.now()}`, user: req.session.userId,
       customerName: `${u.firstName || ''} ${u.lastName || ''}`.trim(),
       customerEmail: u.email, shippingAddress,
-      items: enriched, subtotal, shipping, tax, total,
-      discount: 0, discountCode: null, status: 'processing'
+      items: enriched, subtotal, shipping, tax, total, discount: 0, discountCode: null, status: 'processing'
     });
     await logUserAction(`Order from chat: ${order.orderNo} total=$${total.toFixed(2)}`, 'order', req);
     res.json(order);
@@ -978,6 +948,7 @@ app.get('/api/user/orders', authOnly, async (req, res) => {
   try { res.json(await Order.find({ user: req.session.userId }).populate('items.product').sort({ createdAt: -1 })); } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// ADDRESSES
 app.get('/api/user/addresses', authOnly, async (req, res) => {
   try { res.json(await UserAddress.find({ user: req.session.userId }).sort({ createdAt: -1 })); } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -1012,6 +983,7 @@ app.delete('/api/user/addresses/:id', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// PAYMENTS
 app.get('/api/user/payments', authOnly, async (req, res) => {
   try { res.json(await PaymentMethod.find({ user: req.session.userId })); } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -1030,6 +1002,7 @@ app.post('/api/user/payments', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// BOOKINGS
 app.post('/api/user/bookings', authOnly, async (req, res) => {
   try {
     const b = await TableBooking.create({ ...req.body, user: req.session.userId });
@@ -1038,70 +1011,50 @@ app.post('/api/user/bookings', authOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// Per-user notification fetch with individual read status
+// NOTIFICATIONS
 app.get('/api/user/notifications', authOnly, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(401).json({ message: 'User not found' });
     const userEmail = user.email.toLowerCase();
-
     const notifs = await Notification.find({ $or: [{ user: null }, { user: req.session.userId }] }).sort({ createdAt: -1 }).lean();
-
-    // Resolve per-user read status
     const notifIds = notifs.map(n => n._id);
     const readRecords = await NotificationRead.find({ notification: { $in: notifIds }, userEmail }).lean();
     const readMap = new Map(readRecords.map(r => [String(r.notification), r.isRead]));
-
-    const enriched = notifs.map(n => ({
-      ...n,
-      isRead: readMap.get(String(n._id)) || false
-    }));
-
+    const enriched = notifs.map(n => ({ ...n, isRead: readMap.get(String(n._id)) || false }));
     res.json(enriched);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
-
-// Mark single notification read (per-user)
 app.post('/api/user/notifications/:id/read', authOnly, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(401).json({ message: 'User not found' });
     const userEmail = user.email.toLowerCase();
-
     const notif = await Notification.findOne({ _id: req.params.id, $or: [{ user: null }, { user: req.session.userId }] });
     if (!notif) return res.status(404).json({ message: 'Notification not found' });
-
     await NotificationRead.findOneAndUpdate(
       { notification: notif._id, userEmail },
       { isRead: true, readAt: new Date() },
       { upsert: true, new: true }
     );
-
     res.json({ success: true, isRead: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
-
-// Mark all notifications read (per-user)
 app.post('/api/user/notifications/mark-all-read', authOnly, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(401).json({ message: 'User not found' });
     const userEmail = user.email.toLowerCase();
-
     const notifs = await Notification.find({ $or: [{ user: null }, { user: req.session.userId }] }).select('_id').lean();
     const ops = notifs.map(n => ({
-      updateOne: {
-        filter: { notification: n._id, userEmail },
-        update: { isRead: true, readAt: new Date() },
-        upsert: true
-      }
+      updateOne: { filter: { notification: n._id, userEmail }, update: { isRead: true, readAt: new Date() }, upsert: true }
     }));
     if (ops.length) await NotificationRead.bulkWrite(ops);
-
     res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// CONVERSATIONS
 app.get('/api/user/conversations', authOnly, async (req, res) => {
   try { res.json(await Conversation.find({ user: req.session.userId }).sort({ createdAt: 1 })); } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -1210,26 +1163,17 @@ async function buildChatContext(userId) {
     const lines = cart.items.filter(i => i.product).map(i => `  • ${i.product.name} x${i.qty} = $${((i.product.price || 0) * i.qty).toFixed(2)}`);
     cartInfo = `Cart${cart.discountCode ? ` (coupon: ${cart.discountCode}, discount: -$${cart.discountAmount})` : ''}:\n${lines.join('\n')}`;
   }
-
   let ordersInfo = 'No orders placed yet.';
-  if (orders?.length)
-    ordersInfo = orders.map(o => `  • ${o.orderNo}: status=${o.status}, items=${o.items.length}, total=$${(o.total || 0).toFixed(2)}`).join('\n');
-
+  if (orders?.length) ordersInfo = orders.map(o => `  • ${o.orderNo}: status=${o.status}, items=${o.items.length}, total=$${(o.total || 0).toFixed(2)}`).join('\n');
   let wishlistInfo = 'Wishlist is empty.';
-  if (wishlist?.length)
-    wishlistInfo = wishlist.filter(w => w.product).map(w => `  • ${w.product.name} - $${(w.product.price || 0).toFixed(2)} - rating: ${w.product.rating || 'N/A'}`).join('\n');
-
+  if (wishlist?.length) wishlistInfo = wishlist.filter(w => w.product).map(w => `  • ${w.product.name} - $${(w.product.price || 0).toFixed(2)} - rating: ${w.product.rating || 'N/A'}`).join('\n');
   let notifInfo = 'No notifications.';
-  if (notifications?.length)
-    notifInfo = notifications.map(n => `  • ${n.title}: ${n.message}`).join('\n');
-
+  if (notifications?.length) notifInfo = notifications.map(n => `  • ${n.title}: ${n.message}`).join('\n');
   let bookingInfo = 'No table bookings.';
-  if (bookings?.length)
-    bookingInfo = bookings.map(b => `  • ${b.date} ${b.time} - ${b.guests} guests`).join('\n');
+  if (bookings?.length) bookingInfo = bookings.map(b => `  • ${b.date} ${b.time} - ${b.guests} guests`).join('\n');
 
   const categoryMap = {};
   allCategories.forEach(c => { categoryMap[c._id] = c.nameEn || c.nameAr; });
-
   let menuText = '=== KING FOOD FULL MENU ===\n\n';
   const grouped = {};
   allProducts.forEach(p => {
@@ -1269,53 +1213,24 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { message, sessionId } = req.body;
     if (!message) return res.status(400).json({ reply: 'Message is required.' });
-
     const userId  = req.session?.userId;
     const context = await buildChatContext(userId);
-
     let chatSession = null;
     if (sessionId && userId) chatSession = await ChatSession.findOne({ _id: sessionId, user: userId });
     if (!chatSession && userId) chatSession = await ChatSession.create({ user: userId, title: message.slice(0, 50) });
-
     const history = chatSession?.messages?.slice(-20) || [];
-
     const systemPrompt = `You are "King Food AI" — a fast, precise assistant for King Food restaurant.
 You have REAL-TIME access to the user's menu, cart, orders, wishlist, notifications, and bookings.
-
 CRITICAL LANGUAGE RULE:
 - If the user writes in Arabic, respond in Arabic ONLY.
 - If the user writes in English, respond in English ONLY.
-- Detect the language from the user's first message and maintain it.
-
-YOUR CAPABILITIES:
-1. Menu: Answer any question about products, categories, prices, ratings, descriptions
-2. Cart: Tell the user what's in their cart, coupon discounts applied, and totals
-3. Orders: Show order status (processing/shipping/delivered/cancelled), order numbers, totals
-4. Wishlist: Show saved items
-5. Notifications: Show recent notifications
-6. Book a Table: User can book via the contact page
-7. Promo codes: Inform about applied coupons
-
-RESPONSE STYLE:
-- Think deeply before answering — analyze the user's full context
-- Be concise but thorough, use bullet points for lists
-- Give accurate prices and ratings from the data below
-- If the user wants to order, guide them to use the product panel (+/- buttons) on the right side
-- If the user asks about something outside King Food, politely redirect
-
 ${context.menuText}
-
 === USER DATA ===
 🛒 Cart: ${context.cartInfo}
-
 📦 Orders: ${context.ordersInfo}
-
 ❤️ Wishlist: ${context.wishlistInfo}
-
 🔔 Notifications: ${context.notifInfo}
-
 📅 Bookings: ${context.bookingInfo}`;
-
     const aiBody = {
       max_tokens: 1000,
       messages: [
@@ -1324,15 +1239,12 @@ ${context.menuText}
         { role: 'user', content: message }
       ]
     };
-
     const reply = await callAI(AI_PROVIDERS, aiBody);
-
     if (chatSession && userId) {
       chatSession.messages.push({ role: 'user', content: message }, { role: 'assistant', content: reply });
       if (chatSession.messages.length <= 2) chatSession.title = message.slice(0, 50);
       await chatSession.save();
     }
-
     res.json({ reply, sessionId: chatSession?._id });
   } catch (err) {
     console.error('Chat error:', err);
@@ -1347,7 +1259,6 @@ app.get('/api/chat/history', async (req, res) => {
     res.json(sessions);
   } catch (e) { res.json([]); }
 });
-
 app.get('/api/chat/session/:id', async (req, res) => {
   try {
     if (!req.session?.userId) return res.status(401).json({ message: 'Login required' });
@@ -1356,7 +1267,6 @@ app.get('/api/chat/session/:id', async (req, res) => {
     res.json(s);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
-
 app.delete('/api/chat/session/:id', async (req, res) => {
   try {
     if (!req.session?.userId) return res.status(401).json({ message: 'Login required' });
@@ -1368,32 +1278,26 @@ app.delete('/api/chat/session/:id', async (req, res) => {
 // =====================================================================
 // PAYMOB PAYMENT INTEGRATION
 // =====================================================================
-const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
+const PAYMOB_API_KEY  = process.env.PAYMOB_API_KEY;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID || '1047421';
-const PAYMOB_HMAC = process.env.PAYMOB_HMAC;
+const PAYMOB_HMAC     = process.env.PAYMOB_HMAC;
 
-// Helper: HTTPS POST request (works on ALL Node versions)
 function httpsPost(url, data) {
   return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
+    const urlObj  = new URL(url);
     const payload = JSON.stringify(data);
     const options = {
-      hostname: urlObj.hostname,
-      port: 443,
+      hostname: urlObj.hostname, port: 443,
       path: urlObj.pathname + urlObj.search,
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload)
-      }
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
     };
     const req = https.request(options, (res) => {
       let body = '';
       res.on('data', chunk => body += chunk);
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          try { resolve(JSON.parse(body)); }
-          catch (e) { reject(new Error(`Invalid JSON: ${body.slice(0, 200)}`)); }
+          try { resolve(JSON.parse(body)); } catch (e) { reject(new Error(`Invalid JSON: ${body.slice(0, 200)}`)); }
         } else {
           reject(new Error(`HTTP ${res.statusCode}: ${body.slice(0, 500)}`));
         }
@@ -1405,40 +1309,29 @@ function httpsPost(url, data) {
   });
 }
 
-// Create Paymob Order and get payment key
+// Initiate Paymob payment
 app.post('/api/payment/paymob/initiate', authOnly, async (req, res) => {
   try {
     const { shippingAddress, phone } = req.body;
-    
-    // Get cart with populated products
     const cart = await Cart.findOne({ user: req.session.userId }).populate('items.product');
-    if (!cart || !cart.items.length) {
-      return res.status(400).json({ message: 'Cart is empty' });
-    }
+    if (!cart || !cart.items.length) return res.status(400).json({ message: 'Cart is empty' });
 
-    const user = await User.findById(req.session.userId);
-    
-    // Calculate totals
+    const user     = await User.findById(req.session.userId);
     const subtotal = cart.items.reduce((s, i) => s + i.qty * (i.product?.price || 0), 0);
     const shipping = 10;
-    const tax = (subtotal - (cart.discountAmount || 0)) * 0.14;
-    const total = subtotal + shipping + tax - (cart.discountAmount || 0);
+    const tax      = (subtotal - (cart.discountAmount || 0)) * 0.14;
+    const total    = subtotal + shipping + tax - (cart.discountAmount || 0);
     const totalCents = Math.round(total * 100);
 
-    // Step 1: Authenticate with Paymob
-    const authData = await httpsPost('https://accept.paymob.com/api/auth/tokens', {
-      api_key: PAYMOB_API_KEY
-    });
-    
+    // Step 1: Auth
+    const authData = await httpsPost('https://accept.paymob.com/api/auth/tokens', { api_key: PAYMOB_API_KEY });
     const token = authData.token;
     if (!token) throw new Error('No token received from Paymob auth');
 
     // Step 2: Create order
     const orderData = await httpsPost('https://accept.paymob.com/api/ecommerce/orders', {
-      auth_token: token,
-      delivery_needed: false,
-      amount_cents: totalCents,
-      currency: 'EGP',
+      auth_token: token, delivery_needed: false,
+      amount_cents: totalCents, currency: 'EGP',
       items: cart.items.map(i => ({
         name: i.product?.name || 'Product',
         amount_cents: Math.round((i.product?.price || 0) * 100),
@@ -1446,151 +1339,142 @@ app.post('/api/payment/paymob/initiate', authOnly, async (req, res) => {
         quantity: i.qty
       }))
     });
-
     const paymobOrderId = orderData.id;
     if (!paymobOrderId) throw new Error('No order ID received from Paymob');
 
-    // Step 3: Get payment key
+    // Step 3: Payment key
     const paymentKeyData = await httpsPost('https://accept.paymob.com/api/acceptance/payment_keys', {
-      auth_token: token,
-      amount_cents: totalCents,
-      expiration: 3600,
+      auth_token: token, amount_cents: totalCents, expiration: 3600,
       order_id: paymobOrderId,
       billing_data: {
-        apartment: 'NA',
-        email: user.email,
-        floor: 'NA',
-        first_name: user.firstName || 'User',
-        last_name: user.lastName || 'Customer',
-        street: shippingAddress || 'NA',
-        building: 'NA',
+        apartment: 'NA', email: user.email, floor: 'NA',
+        first_name: user.firstName || 'User', last_name: user.lastName || 'Customer',
+        street: shippingAddress || 'NA', building: 'NA',
         phone_number: phone || '+201016447253',
-        shipping_method: 'NA',
-        postal_code: 'NA',
-        city: 'Cairo',
-        country: 'EG',
-        state: 'NA'
+        shipping_method: 'NA', postal_code: 'NA', city: 'Cairo', country: 'EG', state: 'NA'
       },
-      currency: 'EGP',
-      integration_id: 5688130
+      currency: 'EGP', integration_id: 5688130
     });
-
     const paymentToken = paymentKeyData.token;
     if (!paymentToken) throw new Error('No payment token received from Paymob');
 
-    // Create transaction record
+    // Save transaction
     const orderNo = `PAY-${Date.now()}`;
     const transaction = await Transaction.create({
-      user: req.session.userId,
-      orderNo,
-      paymobOrderId,
-      amount: total,
-      currency: 'EGP',
-      status: 'pending',
-      items: cart.items.map(i => ({
-        product: i.product?._id,
-        name: i.product?.name,
-        qty: i.qty,
-        price: i.product?.price
-      })),
+      user: req.session.userId, orderNo, paymobOrderId,
+      amount: total, currency: 'EGP', status: 'pending',
+      items: cart.items.map(i => ({ product: i.product?._id, name: i.product?.name, qty: i.qty, price: i.product?.price })),
       customerEmail: user.email,
       customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
     });
 
     res.json({
-      success: true,
-      paymentToken,
+      success: true, paymentToken,
       iframeUrl: `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentToken}`,
-      transactionId: transaction._id,
-      orderNo,
-      total
+      transactionId: transaction._id, orderNo, total
     });
-
   } catch (e) {
     console.error('Paymob initiate error:', e.message || e);
     res.status(500).json({ message: 'Payment initiation failed: ' + (e.message || 'Unknown error') });
   }
 });
 
-// Paymob callback (webhook) - for transaction updates
+// ✅ FIX 3 (جديد): GET handler — يمنع "Cannot GET" ويتيح التحقق من الـ endpoint
+app.get('/api/payment/paymob/callback', (req, res) => {
+  // Paymob قد ترسل GET للتحقق — نرد بـ 200 دائماً
+  res.status(200).json({ ok: true, status: 'Paymob callback endpoint is active' });
+});
+
+// ✅ FIX 4: POST webhook — يحدث MongoDB بـ success/failed ويفرغ السلة
 app.post('/api/payment/paymob/callback', async (req, res) => {
   try {
     const data = req.body;
-    const paymobOrderId = data.order?.id;
-    const transactionId = data.id;
-    const success = data.success === true || data.success === 'true';
-    const status = success ? 'success' : 'failed';
-    
-    const transaction = await Transaction.findOne({ paymobOrderId });
-    if (transaction) {
-      transaction.status = status;
-      transaction.paymobTransactionId = transactionId;
-      transaction.paymentMethod = data.source_data?.type || 'card';
-      transaction.rawResponse = data;
-      await transaction.save();
 
-      if (success) {
-        const cart = await Cart.findOne({ user: transaction.user });
-        if (cart) {
-          await Order.create({
-            orderNo: transaction.orderNo,
-            user: transaction.user,
-            customerName: transaction.customerName,
-            customerEmail: transaction.customerEmail,
-            items: transaction.items,
-            total: transaction.amount,
-            status: 'processing'
-          });
-          cart.items = [];
-          cart.appliedCoupon = null;
-          cart.discountAmount = 0;
-          cart.discountCode = null;
-          await cart.save();
-        }
+    // استخراج البيانات من الـ webhook
+    const paymobOrderId  = data.order?.id;
+    const transactionId  = data.id;
+    const success        = data.success === true || data.success === 'true';
+    const status         = success ? 'success' : 'failed';
+
+    console.log(`📦 Paymob webhook received — orderId: ${paymobOrderId}, success: ${success}`);
+
+    if (!paymobOrderId) {
+      console.warn('⚠️ Paymob webhook: missing order id');
+      return res.status(200).json({ received: true });
+    }
+
+    // البحث عن الـ transaction في MongoDB
+    const transaction = await Transaction.findOne({ paymobOrderId: Number(paymobOrderId) });
+
+    if (!transaction) {
+      console.warn(`⚠️ Transaction not found for paymobOrderId: ${paymobOrderId}`);
+      return res.status(200).json({ received: true });
+    }
+
+    // ✅ تحديث حالة الـ transaction في MongoDB
+    transaction.status               = status;
+    transaction.paymobTransactionId  = transactionId;
+    transaction.paymentMethod        = data.source_data?.type || 'card';
+    transaction.rawResponse          = data;
+    await transaction.save();
+
+    console.log(`✅ Transaction ${transaction.orderNo} updated to: ${status}`);
+
+    // ✅ لو الدفع نجح: أنشئ الأوردر وفرّغ السلة
+    if (success) {
+      // تجنب إنشاء أوردر مكرر
+      const existingOrder = await Order.findOne({ orderNo: transaction.orderNo });
+      if (!existingOrder) {
+        await Order.create({
+          orderNo:       transaction.orderNo,
+          user:          transaction.user,
+          customerName:  transaction.customerName,
+          customerEmail: transaction.customerEmail,
+          items:         transaction.items,
+          total:         transaction.amount,
+          status:        'processing'
+        });
+        console.log(`✅ Order created: ${transaction.orderNo}`);
+      }
+
+      // تفريغ السلة من MongoDB
+      const cart = await Cart.findOne({ user: transaction.user });
+      if (cart) {
+        cart.items          = [];
+        cart.appliedCoupon  = null;
+        cart.discountAmount = 0;
+        cart.discountCode   = null;
+        await cart.save();
+        console.log(`✅ Cart cleared for user: ${transaction.user}`);
       }
     }
-    res.json({ received: true });
+
+    res.status(200).json({ received: true });
   } catch (e) {
-    console.error('Paymob callback error:', e);
-    res.status(500).json({ message: e.message });
+    console.error('❌ Paymob callback error:', e);
+    // دائماً نرد بـ 200 لـ Paymob حتى لا تعيد الإرسال
+    res.status(200).json({ received: true, error: e.message });
   }
 });
 
-// Iframe redirect after payment completion (detected by iframe navigation)
-app.get('/payment-finished', (req, res) => {
-  const { success, tx_id } = req.query;
-  res.send(`<!doctype html><html><body><script>
-    if (window.parent) {
-      window.parent.postMessage({ type: 'paymob_result', success: ${!!success}, transactionId: ${tx_id || 'null'} }, '*');
-    }
-  <\/script></body></html>`);
-});
-
-// Get transaction status
+// Transaction status
 app.get('/api/payment/transaction/:id', authOnly, async (req, res) => {
   try {
-    const transaction = await Transaction.findOne({
-      _id: req.params.id,
-      user: req.session.userId
-    }).populate('items.product');
+    const transaction = await Transaction.findOne({ _id: req.params.id, user: req.session.userId }).populate('items.product');
     if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
     res.json(transaction);
-  } catch (e) {
-    res.status(500).json({ message: e.message });
-  }
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// Get user transactions history
+// User transactions history
 app.get('/api/payment/transactions', authOnly, async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.session.userId })
-      .sort({ createdAt: -1 }).limit(20);
+    const transactions = await Transaction.find({ user: req.session.userId }).sort({ createdAt: -1 }).limit(20);
     res.json(transactions);
-  } catch (e) {
-    res.status(500).json({ message: e.message });
-  }
+  } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// Root
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
 
 // =====================================================================
@@ -1632,7 +1516,7 @@ io.on('connection', (socket) => {
       io.emit('support:admin-feed', msg);
       io.emit('support:new-message', msg);
     } catch (e) {
-      socket.emit('support:error', { message: 'Failed to save reply. Please try again.' });
+      socket.emit('support:error', { message: 'Failed to save reply.' });
     }
   });
 
