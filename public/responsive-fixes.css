@@ -1,0 +1,654 @@
+/* ================================================================
+   🎯 KING FOOD RESTAURANT - COMPLETE RESPONSIVE FIXES
+   ================================================================
+   Fixes for:
+   1. Header navigation not responsive on mobile
+   2. Customer Feedback section not responsive
+   3. Cart/Menu items layout on mobile
+   4. Support page FAQ sidebar responsive behavior
+   ================================================================ */
+
+/* ================================================================
+   1️⃣ HEADER RESPONSIVE FIXES (Images 1, 4)
+   ================================================================ */
+
+/* Mobile: < 576px - Hide long labels, stack elements */
+@media (max-width: 575.98px) {
+  .header {
+    padding: 0 1rem;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header ul {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header ul li {
+    padding: 0 0.75rem;
+    font-size: 13px;
+  }
+
+  .nav ul li {
+    padding: 0 0.5rem;
+    font-size: 12px;
+  }
+
+  .account ul li {
+    padding: 0 0.5rem;
+    font-size: 16px;
+  }
+
+  /* Stack buttons on very small screens */
+  .logo img {
+    width: 50px;
+  }
+
+  /* Hide text, show icons only */
+  .nav ul li {
+    display: none;
+  }
+
+  .account {
+    flex: 1;
+    min-width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .account ul {
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Phablet: 576px - 767px */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .header {
+    padding: 0 1rem;
+    height: 60px;
+  }
+
+  .header ul li {
+    padding: 0 0.75rem;
+    font-size: 13px;
+  }
+
+  .nav ul li {
+    padding: 0 0.75rem;
+    font-size: 13px;
+  }
+
+  .account ul li {
+    padding: 0 0.5rem;
+    font-size: 16px;
+  }
+
+  .logo img {
+    width: 60px;
+  }
+}
+
+/* ================================================================
+   2️⃣ CUSTOMER FEEDBACK SECTION FIX (Images 2, 5)
+   Main Slide 4 - Chef section responsive
+   ================================================================ */
+
+/* Mobile: < 576px - Stack vertically, center align */
+@media (max-width: 575.98px) {
+  .main_slide4 {
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .main_slide4 .chef-feed {
+    flex: 1;
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+  }
+
+  .main_slide4 .chef-feed h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .main_slide4 .chef-feed p {
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .main_slide4 .chef {
+    flex: 1;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .main_slide4 .chef img {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+  }
+
+  /* Feedback detail - center and stack */
+  .main_slide4 .chef-detail {
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  .main_slide4 .chef-detail img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .main_slide4 .chef-detail div {
+    text-align: center;
+  }
+
+  /* Stats section - stack vertically */
+  .main_slide4 .chef-vic {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 0;
+    width: 100%;
+  }
+
+  .main_slide4 .chef-vic div {
+    flex: 1;
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+
+  .main_slide4 .chef-vic div i {
+    font-size: 28px;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .main_slide4 .chef-vic div h4 {
+    font-size: 24px;
+    margin: 0.5rem 0;
+  }
+
+  .main_slide4 .chef-vic div p {
+    font-size: 12px;
+    line-height: 1.4;
+    padding-top: 0.5rem;
+  }
+}
+
+/* Phablet: 576px - 767px */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .main_slide4 {
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .main_slide4 .chef-feed h2 {
+    font-size: 26px;
+  }
+
+  .main_slide4 .chef img {
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .main_slide4 .chef-vic {
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .main_slide4 .chef-vic div {
+    flex: 1;
+  }
+}
+
+/* Tablet: 768px - 991px */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .main_slide4 {
+    flex-direction: row;
+    gap: 2rem;
+  }
+
+  .main_slide4 .chef-feed {
+    flex: 1;
+  }
+
+  .main_slide4 .chef {
+    flex: 1;
+  }
+
+  .main_slide4 .chef img {
+    width: 90%;
+    max-width: 400px;
+  }
+
+  .main_slide4 .chef-feed h2 {
+    font-size: 28px;
+  }
+}
+
+/* ================================================================
+   3️⃣ CART/MENU ITEMS RESPONSIVE FIX (Images 3, 6)
+   ================================================================ */
+
+/* Mobile: < 576px - Single column, no horizontal scroll */
+@media (max-width: 575.98px) {
+  .menu-items,
+  .food-items {
+    margin: 2rem 1rem;
+    padding: 1.5rem 1rem;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .menu-categories {
+    margin: 2rem 1rem;
+    padding: 1.5rem 1rem;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .category-card,
+  .food-item,
+  .item {
+    max-width: 100%;
+    width: 100%;
+    padding: 1.5rem;
+  }
+
+  .category-card .image-wrapper,
+  .food-item .image-wrapper,
+  .item div {
+    height: 150px;
+  }
+
+  .category-card h3,
+  .food-item h3,
+  .item h3 {
+    font-size: 18px;
+  }
+
+  .category-card .red_btn,
+  .food-item .white_btn,
+  .item .white_btn {
+    width: 100%;
+    line-height: 45px;
+    margin-top: 1rem;
+  }
+
+  /* Cart item details - ensure text wraps */
+  .food-item .description,
+  .item p {
+    font-size: 13px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .food-item .price,
+  .item .price {
+    font-size: 18px;
+    margin-top: 0.75rem;
+  }
+
+  /* Ensure no horizontal overflow */
+  .menu-items,
+  .food-items,
+  .menu-categories {
+    overflow-x: hidden;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+}
+
+/* Phablet: 576px - 767px - 2 columns */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .menu-items,
+  .food-items,
+  .menu-categories {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 1rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .category-card h3,
+  .food-item h3,
+  .item h3 {
+    font-size: 17px;
+  }
+
+  .food-item .image-wrapper,
+  .item div {
+    height: 160px;
+  }
+}
+
+/* Tablet: 768px - 991px - 3 columns */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .menu-items,
+  .food-items {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .menu-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ================================================================
+   4️⃣ SUPPORT PAGE FAQ RESPONSIVE FIX (Images 4, 5)
+   ================================================================ */
+
+/* Mobile: < 576px - Show FAQ as toggleable section */
+@media (max-width: 575.98px) {
+  .support-layout {
+    flex-direction: column;
+    height: auto;
+    gap: 0;
+    padding: 0;
+  }
+
+  .faq-sidebar {
+    width: 100%;
+    min-width: auto;
+    max-height: 100%;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem;
+    display: block;
+  }
+
+  .faq-sidebar h5 {
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .faq-item {
+    margin-bottom: 0.75rem;
+  }
+
+  .faq-item .faq-q {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .faq-item .faq-a {
+    font-size: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .faq-item.open .faq-a {
+    max-height: 400px;
+    padding: 0 1rem 1rem;
+  }
+
+  /* Hide contact info on very small screens */
+  .faq-sidebar > div:last-child {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    display: none;
+  }
+
+  .chat-main {
+    flex: 1;
+    border-radius: 0;
+    border: none;
+    min-height: calc(100vh - 76px - 300px);
+  }
+
+  .chat-messages .msg {
+    max-width: 85%;
+    min-width: 180px;
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-input-area {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .chat-input-area input[type="text"] {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-input-area .chat-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .chat-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-header .chat-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .chat-header .chat-info .name {
+    font-size: 0.85rem;
+  }
+
+  .chat-header .chat-info .status {
+    font-size: 0.7rem;
+  }
+}
+
+/* Phablet: 576px - 767px - Show FAQ on top */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .support-layout {
+    flex-direction: column;
+    height: auto;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .faq-sidebar {
+    width: 100%;
+    min-width: auto;
+    max-height: 300px;
+    border-radius: 12px;
+    display: block;
+  }
+
+  .chat-main {
+    min-height: calc(100vh - 76px - 350px);
+  }
+
+  .chat-messages .msg {
+    max-width: 80%;
+    font-size: 0.9rem;
+  }
+}
+
+/* ================================================================
+   5️⃣ GENERAL OVERFLOW PREVENTION
+   ================================================================ */
+
+@media (max-width: 767.98px) {
+  html,
+  body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  .menu-items,
+  .food-items,
+  .menu-categories {
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ================================================================
+   6️⃣ BUTTON RESPONSIVE SIZING
+   ================================================================ */
+
+@media (max-width: 575.98px) {
+  .red_btn,
+  .white_btn,
+  button,
+  .btn {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    font-size: 14px;
+  }
+
+  .food-item .red_btn,
+  .item .white_btn,
+  .category-card .red_btn {
+    width: 100%;
+  }
+}
+
+/* ================================================================
+   7️⃣ TEXT RESPONSIVE SCALING
+   ================================================================ */
+
+@media (max-width: 575.98px) {
+  h1 {
+    font-size: clamp(1.25rem, 4vw, 2rem);
+  }
+
+  h2 {
+    font-size: clamp(1rem, 3.5vw, 1.75rem);
+  }
+
+  h3 {
+    font-size: clamp(0.9rem, 3vw, 1.5rem);
+  }
+
+  h4 {
+    font-size: clamp(0.85rem, 2.5vw, 1.25rem);
+  }
+
+  p,
+  .food-item .description,
+  .item p {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    line-height: 1.5;
+  }
+}
+
+/* ================================================================
+   8️⃣ LANDSCAPE MODE SUPPORT
+   ================================================================ */
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .main_slide4 {
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .main_slide4 .chef-feed h2 {
+    font-size: 20px;
+  }
+
+  .main_slide4 .chef img {
+    width: 40vw;
+    max-width: 300px;
+  }
+
+  .support-layout {
+    height: calc(100vh - 56px);
+  }
+
+  .chat-main {
+    min-height: auto;
+  }
+}
+
+/* ================================================================
+   9️⃣ TABLET OPTIMIZATIONS (768px - 991px)
+   ================================================================ */
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .header {
+    padding: 0 2rem;
+  }
+
+  .menu-items,
+  .food-items {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .menu-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .main_slide4 {
+    flex-direction: row;
+    gap: 2rem;
+  }
+
+  .support-layout {
+    gap: 1.5rem;
+  }
+
+  .faq-sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+/* ================================================================
+   ✅ DESKTOP OPTIMIZATIONS (992px+)
+   ================================================================ */
+
+@media (min-width: 992px) {
+  .header {
+    padding: 0 18vw;
+  }
+
+  .menu-items,
+  .food-items {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .menu-categories {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .main_slide4 {
+    flex-direction: row;
+    gap: 3rem;
+  }
+
+  .support-layout {
+    gap: 2rem;
+  }
+
+  .faq-sidebar {
+    width: 320px;
+    min-width: 320px;
+  }
+}
