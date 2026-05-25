@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-i18n="pay_secure">Secure Checkout - King Food</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/site.css">
+    <style>
+    body {
+        min-height: 100vh;
+    }
+
+    .checkout-wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+
+    .checkout-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .checkout-sub {
+        color: var(--muted);
+        margin-bottom: 2rem;
+    }
+
+    /* === Cards === */
+    .panel-checkout {
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .panel-checkout h5 {
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .panel-checkout h5 i {
+        color: var(--accent);
+    }
+
+    /* === Cart items === */
+    .checkout-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .checkout-item:last-child {
+        border-bottom: none;
+    }
+
+    .checkout-item-img {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: var(--border-color);
+    }
+
+    .checkout-item-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .checkout-item-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .checkout-item-meta {
+        font-size: 0.8rem;
+        color: var(--muted);
+    }
+
+    .checkout-item-total {
+        font-weight: 700;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    /* === Price rows === */
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.45rem 0;
+        font-size: 0.95rem;
+        color: var(--muted);
+    }
+
+    .price-line.total {
+        border-top: 2px solid var(--border-color);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .price-line.total span:last-child {
+        color: var(--accent);
+    }
+
+    .price-line.discount span:last-child {
+        color: var(--ok);
+        font-weight: 600;
+    }
+
+    /* === Pay button === */
+    .btn-paymob {
+        background: linear-gradient(135deg, var(--accent) 0%, #f7931e 100%);
+        border: none;
+        padding: 0.9rem 2rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        border-radius: 12px;
+        color: #fff;
+        width: 100%;
+        transition: all 0.25s;
+        box-shadow: 0 6px 24px rgba(255,107,53,0.25);
+    }
+
+    .btn-paymob:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 32px rgba(255,107,53,0.35);
+        color: #fff;
+    }
+
+    .btn-paymob:disabled {
+        opacity: 0.55;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* === Badge secure === */
+    .secure-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--ok);
+    }
+
+    .secure-badge i { font-size: 1rem; }
+
+    /* === Payment iframe area === */
+    .iframe-container {
+        margin-top: 1.25rem;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: #fff;
+        min-height: 420px;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .iframe-container iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
+        display: block;
+    }
+
+    .iframe-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--panel-bg);
+        z-index: 2;
+        gap: 1rem;
+    }
+
+    .iframe-loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .iframe-hidden { display: none; }
+
+    /* === Payment methods row === */
+    .pmt-methods {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .pmt-method {
+        padding: 0.5rem 1rem;
+        background: var(--border-color);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .pmt-method i { color: var(--accent); }
+
+    /* === Responsive === */
+    @media (max-width: 768px) {
+        .checkout-wrap { padding: 1rem; }
+        .panel-checkout { padding: 1.25rem; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand nav-theme sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home.html"><i class="bi bi-shop"></i> King Food</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/cart.html"><i class="bi bi-arrow-left"></i> <span data-i18n="pay_back">Back to Cart</span></a>
+        </div>
+    </div>
+</nav>
+
+<div class="checkout-wrap">
+
+    <!-- Header -->
+    <div class="checkout-title"><i class="bi bi-credit-card me-2" style="color:var(--accent)"></i><span data-i18n="pay_secure">Secure Checkout</span></div>
+    <div class="checkout-sub" data-i18n="pay_subtitle">Complete your order with Paymob - Egypt's most trusted payment gateway</div>
+
+    <div class="row g-4">
+
+        <!-- ===== LEFT: Order Summary ===== -->
+        <div class="col-lg-7">
+            <div class="panel-checkout">
+                <h5><i class="bi bi-receipt"></i> <span data-i18n="pay_summary">Order Summary</span></h5>
+                <div id="orderItems"></div>
+
+                <hr class="my-3" style="border-color:var(--border-color)">
+
+                <div class="price-line"><span data-i18n="pay_subtotal">Subtotal</span><span id="lblSubtotal">$0.00</span></div>
+                <div class="price-line"><span data-i18n="pay_shipping">Shipping</span><span id="lblShipping">$10.00</span></div>
+                <div class="price-line"><span data-i18n="pay_tax">Tax (14%)</span><span id="lblTax">$0.00</span></div>
+                <div class="price-line discount" id="discountRow" style="display:none"><span data-i18n="pay_discount">Discount</span><span id="lblDiscount">-$0.00</span></div>
+                <div class="price-line total"><span data-i18n="pay_total">Total</span><span id="lblTotal">$0.00</span></div>
+            </div>
+        </div>
+
+        <!-- ===== RIGHT: Payment ===== -->
+        <div class="col-lg-5">
+            <div class="panel-checkout">
+                <h5><i class="bi bi-wallet2"></i> <span data-i18n="pay_method">Payment Method</span></h5>
+
+                <div class="pmt-methods">
+                    <span class="pmt-method"><i class="bi bi-credit-card"></i> Visa</span>
+                    <span class="pmt-method"><i class="bi bi-credit-card-2-front"></i> Mastercard</span>
+                    <span class="pmt-method"><i class="bi bi-credit-card"></i> Meeza</span>
+                </div>
+
+                <button id="payBtn" class="btn-paymob" onclick="initiatePayment()">
+                    <i class="bi bi-lock-fill me-2"></i><span data-i18n="pay_now">Pay Securely with Paymob</span>
+                </button>
+
+                <!-- Paymob iframe area -->
+                <div id="iframeArea" class="iframe-container iframe-hidden">
+                    <div class="iframe-loading" id="iframeLoading">
+                        <div class="spinner"></div>
+                        <small style="color:var(--muted)" data-i18n="pay_processing">Connecting to Paymob...</small>
+                    </div>
+                    <iframe id="paymobIframe" allow="payment" allowfullscreen></iframe>
+                </div>
+
+                <div class="secure-badge">
+                    <i class="bi bi-shield-check"></i>
+                    <span data-i18n="pay_secured">Secured by Paymob • 256-bit SSL</span>
+                </div>
+
+                <div class="mt-3" style="font-size:0.8rem;color:var(--muted);text-align:center">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span data-i18n="pay_safe">Your payment is processed securely through Paymob. We never store your card details.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/site.js"></script>
+<script src="/i18n.js"></script>
+<script>
+let cartData = null;
+let currentTransaction = null;
+let pollingTimer = null;
+
+// ---- t helper using both i18n.js and site.js ----
+function __(key) { return window.i18n?.t(key) || (typeof t === 'function' ? t(key) : key); }
+
+// ---- Load cart from API ----
+async function loadCart() {
+    try {
+        const r = await fetch('/api/user/cart');
+        if (!r.ok) { if (r.status===401) { window.location.href='/login.html'; return; } throw new Error(); }
+        cartData = await r.json();
+        if (!cartData.items || !cartData.items.length) { window.location.href='/cart.html'; return; }
+        renderOrder();
+    } catch(e) {
+        showToast('Failed to load cart', false);
+        window.location.href='/cart.html';
+    }
+}
+
+// ---- Render order summary ----
+function renderOrder() {
+    const container = document.getElementById('orderItems');
+    container.innerHTML = '';
+    let subtotal = 0;
+
+    cartData.items.forEach(item => {
+        if (!item.product) return;
+        const lineTotal = item.qty * item.product.price;
+        subtotal += lineTotal;
+
+        const el = document.createElement('div');
+        el.className = 'checkout-item';
+        el.innerHTML = `
+            <img class="checkout-item-img" src="${item.product.imageUrl || 'https://placehold.co/52x52/1e293b/94a3b8?text=?'}" alt="${item.product.name}" loading="lazy" onerror="this.src='https://placehold.co/52x52/1e293b/94a3b8?text=?'">
+            <div class="checkout-item-body">
+                <div class="checkout-item-name">${item.product.name}</div>
+                <div class="checkout-item-meta">$${item.product.price.toFixed(2)} × ${item.qty}</div>
+            </div>
+            <div class="checkout-item-total">$${lineTotal.toFixed(2)}</div>
+        `;
+        container.appendChild(el);
+    });
+
+    const shipping = 10;
+    const discount = cartData.discountAmount || 0;
+    const tax = (subtotal - discount) * 0.14;
+    const total = subtotal + shipping + tax - discount;
+
+    document.getElementById('lblSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('lblShipping').textContent = `$${shipping.toFixed(2)}`;
+    document.getElementById('lblTax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('lblTotal').textContent = `$${total.toFixed(2)}`;
+
+    if (discount > 0) {
+        document.getElementById('discountRow').style.display = 'flex';
+        document.getElementById('lblDiscount').textContent = `-$${discount.toFixed(2)}`;
+    }
+
+    window.orderTotals = { subtotal, shipping, tax, discount, total };
+}
+
+// ---- Initiate Paymob payment ----
+async function initiatePayment() {
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> ' + __('pay_processing');
+
+    try {
+        const r = await fetch('/api/payment/paymob/initiate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shippingAddress: 'Cairo, Egypt', phone: '+201016447253' })
+        });
+
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.message || 'Initiation failed');
+
+        currentTransaction = data;
+
+        const area = document.getElementById('iframeArea');
+        const loading = document.getElementById('iframeLoading');
+        const iframe = document.getElementById('paymobIframe');
+
+        area.classList.remove('iframe-hidden');
+        loading.style.display = 'flex';
+        btn.style.display = 'none';
+
+        window.addEventListener('message', onPaymentMessage);
+        iframe.src = data.iframeUrl;
+        startPolling();
+
+    } catch (e) {
+        showToast(e.message || __('pay_fail_msg'), false);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>' + __('pay_now');
+    }
+}
+
+// ---- Iframe loaded ----
+document.getElementById('paymobIframe').onload = function() {
+    document.getElementById('iframeLoading').style.display = 'none';
+};
+
+// ---- PostMessage from Paymob redirect ----
+function onPaymentMessage(event) {
+    if (event.data && event.data.type === 'paymob_result') {
+        window.removeEventListener('message', onPaymentMessage);
+        if (event.data.success) handleSuccess();
+        else handleFailure();
+    }
+}
+
+// ---- Poll transaction status ----
+function startPolling() {
+    if (!currentTransaction) return;
+    let attempts = 0;
+    const maxAttempts = 60;
+
+    function poll() {
+        if (attempts >= maxAttempts) { pollingTimer = null; return; }
+        attempts++;
+
+        fetch(`/api/payment/transaction/${currentTransaction.transactionId}`)
+            .then(r => r.json())
+            .then(tx => {
+                if (tx.status === 'success') {
+                    window.removeEventListener('message', onPaymentMessage);
+                    handleSuccess();
+                } else if (tx.status === 'failed') {
+                    window.removeEventListener('message', onPaymentMessage);
+                    handleFailure();
+                } else {
+                    pollingTimer = setTimeout(poll, 5000);
+                }
+            })
+            .catch(() => { pollingTimer = setTimeout(poll, 5000); });
+    }
+
+    pollingTimer = setTimeout(poll, 8000);
+}
+
+// ---- Handle success ----
+function handleSuccess() {
+    if (pollingTimer) { clearTimeout(pollingTimer); pollingTimer = null; }
+    window.removeEventListener('message', onPaymentMessage);
+
+    showToast(__('pay_success_msg'), true);
+
+    if (window.confetti) {
+        confetti({ particleCount: 180, spread: 80, origin: { y: 0.5 } });
+        setTimeout(() => confetti({ particleCount: 100, spread: 60, origin: { y: 0.4 } }), 400);
+    }
+
+    setTimeout(() => {
+        const btn = document.getElementById('payBtn');
+        btn.style.display = 'block';
+        btn.disabled = false;
+        btn.className = 'btn btn-success w-100 py-3 fw-bold';
+        btn.innerHTML = '<i class="bi bi-check-circle me-2"></i> ' + __('pay_success_msg') + ' <a href="/home.html" class="ms-2 text-white">' + __('pay_continue') + '</a>';
+        btn.onclick = null;
+    }, 1200);
+}
+
+// ---- Handle failure ----
+function handleFailure() {
+    if (pollingTimer) { clearTimeout(pollingTimer); pollingTimer = null; }
+    window.removeEventListener('message', onPaymentMessage);
+
+    showToast(__('pay_fail_msg'), false);
+
+    setTimeout(() => {
+        const btn = document.getElementById('payBtn');
+        btn.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>' + __('pay_retry');
+        btn.onclick = initiatePayment;
+
+        const area = document.getElementById('iframeArea');
+        area.classList.add('iframe-hidden');
+        document.getElementById('paymobIframe').src = '';
+    }, 1500);
+}
+
+// ---- Init ----
+document.addEventListener('DOMContentLoaded', loadCart);
+</script>
+</body>
+</html>

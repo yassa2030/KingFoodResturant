@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>King Food AI Chat</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/site.css">
+  <script src="/i18n.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .chat-app {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-color);
+      animation: slideUp .35s ease;
+      z-index: 9999;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .chat-app .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--panel-bg);
+      border-bottom: 2px solid var(--accent);
+      flex-shrink: 0;
+    }
+
+    .chat-app .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .chat-app .hdr-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-app .hdr-title {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .chat-app .hdr-status {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .chat-app .hdr-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: var(--btn-secondary-bg);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: .2s;
+      flex-shrink: 0;
+    }
+
+    .chat-app .hdr-btn:hover {
+      background: var(--error);
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    .chat-app .main-row {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .chat-app .left-col {
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      background: var(--panel-bg);
+    }
+
+    .chat-app .history-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-app .new-chat-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .chat-app .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .chat-app .history-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .chat-app .history-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 2px;
+    }
+
+    .chat-app .history-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-bottom: 4px;
+      transition: .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-app .history-item:hover {
+      background: var(--btn-secondary-bg);
+    }
+
+    .chat-app .history-item.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .chat-app .history-item .hi-title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chat-app .history-item .hi-del {
+      opacity: 0;
+      transition: .15s;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+    }
+
+    .chat-app .history-item:hover .hi-del {
+      opacity: 1;
+    }
+
+    .chat-app .center-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chat-app .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--panel-bg);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .chat-app .tb-btn {
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 5px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: .2s;
+      white-space: nowrap;
+    }
+
+    .chat-app .tb-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chat-app .tb-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .chat-app .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-app .chat-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .chat-app .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 2px;
+    }
+
+    .chat-app .msg {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-word;
+      animation: pop .25s ease;
+      position: relative;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .chat-app .msg.bot {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      align-self: flex-start;
+      border-radius: 4px 14px 14px 14px;
+    }
+
+    .chat-app .msg.user {
+      background: var(--accent);
+      color: #fff;
+      align-self: flex-end;
+      border-radius: 14px 4px 14px 14px;
+    }
+
+    .chat-app .msg.typing {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      align-self: flex-start;
+      color: var(--muted);
+    }
+
+    .chat-app .msg .msg-actions {
+      position: absolute;
+      top: -10px;
+      right: 0;
+      display: none;
+      gap: 4px;
+    }
+
+    .chat-app .msg:hover .msg-actions {
+      display: flex;
+    }
+
+    .chat-app .msg.user .msg-actions {
+      left: 0;
+      right: auto;
+    }
+
+    .chat-app .msg-action-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: var(--panel-bg);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      transition: .15s;
+    }
+
+    .chat-app .msg-action-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .chat-app .input-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border-color);
+      background: var(--panel-bg);
+      flex-shrink: 0;
+    }
+
+    .chat-app #chatInput {
+      flex: 1;
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 9px 14px;
+      border-radius: 22px;
+      outline: none;
+      font-size: 13px;
+      transition: border-color .2s;
+    }
+
+    .chat-app #chatInput::placeholder {
+      color: var(--muted);
+    }
+
+    .chat-app #chatInput:focus {
+      border-color: var(--accent);
+    }
+
+    .chat-app #sendBtn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .2s;
+      flex-shrink: 0;
+    }
+
+    .chat-app #sendBtn:hover {
+      transform: scale(1.1);
+    }
+
+    .chat-app #sendBtn:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .dots {
+      display: inline-flex;
+      gap: 3px;
+    }
+
+    .dots span {
+      width: 5px;
+      height: 5px;
+      background: var(--muted);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .dots span:nth-child(2) {
+      animation-delay: .2s
+    }
+
+    .dots span:nth-child(3) {
+      animation-delay: .4s
+    }
+
+    @keyframes bounce {
+
+      0%,
+      80%,
+      100% {
+        transform: translateY(0)
+      }
+
+      40% {
+        transform: translateY(-6px)
+      }
+    }
+
+    .chat-app .right-col {
+      width: 0;
+      overflow: hidden;
+      transition: width .3s ease;
+      border-left: 1px solid var(--border-color);
+      background: var(--panel-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-app .right-col.open {
+      width: 400px;
+    }
+
+    .chat-app .right-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-app .right-header .close-panel {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .chat-app .right-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .chat-app .right-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .chat-app .right-body::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 2px;
+    }
+
+    .chat-app .prod-card {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: .2s;
+    }
+
+    .chat-app .prod-card:hover {
+      border-color: var(--accent);
+    }
+
+    .chat-app .prod-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--btn-secondary-bg);
+    }
+
+    .chat-app .prod-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-app .prod-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .chat-app .prod-desc {
+      font-size: 11px;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .chat-app .prod-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+
+    .chat-app .prod-price {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .chat-app .prod-stars {
+      font-size: 12px;
+      color: #f59e0b;
+    }
+
+    .chat-app .prod-qty {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-app .prod-qty button {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: var(--btn-secondary-bg);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: .15s;
+    }
+
+    .chat-app .prod-qty button:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .chat-app .prod-qty span {
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .chat-app .order-summary {
+      padding: 10px;
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      background: var(--panel-bg);
+    }
+
+    .chat-app .order-summary .os-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 2px 0;
+    }
+
+    .chat-app .order-summary .os-total {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+      border-top: 1px solid var(--border-color);
+      padding-top: 6px;
+      margin-top: 4px;
+    }
+
+    .chat-app .confirm-order-btn {
+      width: 100%;
+      padding: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      margin-top: 8px;
+    }
+
+    .chat-app .confirm-order-btn:hover {
+      opacity: .9;
+    }
+
+    @media(max-width:900px) {
+      .chat-app .left-col {
+        width: 200px;
+      }
+
+      .chat-app .right-col.open {
+        width: 320px;
+      }
+    }
+
+    @media(max-width:640px) {
+      .chat-app .left-col {
+        display: none;
+      }
+
+      .chat-app .right-col.open {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 100;
+      }
+
+      .chat-app .main-row {
+        position: relative;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-app" id="chatApp">
+    <!-- Header -->
+    <div class="header">
+      <div class="avatar">🍔</div>
+      <div class="hdr-info">
+        <div class="hdr-title">King Food AI</div>
+        <div class="hdr-status">● Online</div>
+      </div>
+      <button class="hdr-btn" id="historyToggle" title="Toggle history"><i class="bi bi-list"></i></button>
+      <button class="hdr-btn" id="closeBtn" title="Close">&times;</button>
+    </div>
+
+    <div class="main-row">
+      <!-- Left: History -->
+      <div class="left-col" id="historyCol">
+        <div class="history-header">
+          <span>💬 History</span>
+          <button class="new-chat-btn" id="newChatBtn">+ New</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <!-- Center: Chat -->
+      <div class="center-col">
+        <div class="toolbar">
+          <button class="tb-btn" onclick="quickChat('Show me the menu')">📋 Menu</button>
+          <button class="tb-btn" onclick="quickChat('What do you recommend?')">⭐ Recommend</button>
+          <button class="tb-btn" onclick="quickChat('Show my cart')">🛒 Cart</button>
+          <button class="tb-btn" onclick="quickChat('Show my orders')">📦 Orders</button>
+          <button class="tb-btn" id="showProductsBtn">🛍️ Products</button>
+          <button class="tb-btn" id="showWishlistBtn">❤️ Wishlist</button>
+        </div>
+        <div class="chat-messages" id="chatBody">
+          <div class="msg bot">👋 Hello! I'm King Food AI. I can help you browse our menu, check prices, review your
+            cart and orders, and more!</div>
+        </div>
+        <div class="input-row">
+          <input type="text" id="chatInput" placeholder="Type your message..." autofocus>
+          <button id="sendBtn">➤</button>
+        </div>
+      </div>
+
+      <!-- Right: Products / Wishlist panel -->
+      <div class="right-col" id="rightPanel">
+        <div class="right-header">
+          <span id="rightPanelTitle">Products</span>
+          <button class="close-panel" id="closePanelBtn">&times;</button>
+        </div>
+        <div class="right-body" id="rightPanelBody"></div>
+        <div class="order-summary" id="orderSummary" style="display:none;">
+          <div class="os-row"><span>Items</span><span id="osCount">0</span></div>
+          <div class="os-row os-total"><span>Total</span><span id="osTotal">$0.00</span></div>
+          <button class="confirm-order-btn" id="confirmOrderBtn">✅ Confirm Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSessionId = null;
+    let orderItems = [];
+    let panelMode = 'products';
+    let allProducts = [];
+    let allWishlist = [];
+
+    document.getElementById('chatInput').onkeydown = e => { if (e.key === 'Enter') sendChat(); };
+    document.getElementById('sendBtn').onclick = sendChat;
+
+    document.getElementById('closeBtn').onclick = () => {
+      window.location.href = document.referrer || '/home.html';
+    };
+
+    document.getElementById('historyToggle').onclick = () => {
+      const col = document.getElementById('historyCol');
+      col.style.display = col.style.display === 'none' ? 'flex' : 'none';
+    };
+
+    document.getElementById('closePanelBtn').onclick = () => {
+      document.getElementById('rightPanel').classList.remove('open');
+    };
+
+    document.getElementById('showProductsBtn').onclick = () => {
+      panelMode = 'products';
+      document.getElementById('rightPanelTitle').textContent = '🛍️ Products';
+      document.getElementById('rightPanel').classList.add('open');
+      loadProductsPanel();
+    };
+
+    document.getElementById('showWishlistBtn').onclick = () => {
+      panelMode = 'wishlist';
+      document.getElementById('rightPanelTitle').textContent = '❤️ Wishlist';
+      document.getElementById('rightPanel').classList.add('open');
+      loadWishlistPanel();
+    };
+
+    document.getElementById('confirmOrderBtn').onclick = async () => {
+      if (orderItems.length === 0) { alert('No items in your order'); return; }
+      try {
+        // Check user's addresses
+        const addresses = await fetch('/api/user/addresses').then(r => r.json());
+        let selectedAddressId = null;
+
+        if (addresses.length === 0) {
+          if (!confirm('No shipping address found. Would you like to add one in the addresses page?')) return;
+          window.location.href = '/addresses.html';
+          return;
+        }
+
+        const defaultAddr = addresses.find(a => a.isDefault);
+        if (defaultAddr) {
+          selectedAddressId = defaultAddr._id;
+        } else if (addresses.length === 1) {
+          selectedAddressId = addresses[0]._id;
+        } else {
+          // Multiple addresses, no default — let user choose
+          const addrList = addresses.map((a, i) =>
+            `${i + 1}. ${a.streetAddress}, ${a.city}${a.country ? ', ' + a.country : ''} — ${a.fullName}`
+          ).join('\n');
+          const choice = prompt('Select an address (enter number):\n' + addrList);
+          const idx = parseInt(choice) - 1;
+          if (isNaN(idx) || idx < 0 || idx >= addresses.length) {
+            alert('Invalid selection');
+            return;
+          }
+          selectedAddressId = addresses[idx]._id;
+        }
+
+        const res = await fetch('/api/user/orders/from-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: orderItems.map(i => ({ id: i.id, qty: i.qty })), addressId: selectedAddressId })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+        const order = await res.json();
+        orderItems = [];
+        updateOrderSummary();
+        loadProductsPanel();
+        const selAddr = addresses.find(a => a._id === selectedAddressId);
+        const addrStr = selAddr ? `${selAddr.streetAddress}, ${selAddr.city}${selAddr.country ? ', ' + selAddr.country : ''}` : '';
+        appendMsg('✅ Order #' + order.orderNo + ' confirmed! Shipping to: ' + addrStr + '. Track your order in Orders page.', 'bot');
+        setTimeout(() => { window.location.href = '/orders.html'; }, 2500);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    document.getElementById('newChatBtn').onclick = () => {
+      currentSessionId = null;
+      document.getElementById('chatBody').innerHTML = '<div class="msg bot">👋 Hello! I\'m King Food AI. How can I help you today?</div>';
+      document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+    };
+
+    function appendMsg(text, sender) {
+      const body = document.getElementById('chatBody');
+      const div = document.createElement('div');
+      div.className = 'msg ' + sender;
+
+      const txtSpan = document.createElement('span');
+      txtSpan.textContent = text;
+      div.appendChild(txtSpan);
+
+      // Actions
+      const actions = document.createElement('div');
+      actions.className = 'msg-actions';
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'msg-action-btn';
+      copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+      copyBtn.title = 'Copy';
+      copyBtn.onclick = () => { navigator.clipboard.writeText(text); copyBtn.innerHTML = '<i class="bi bi-check"></i>'; setTimeout(() => { copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500); };
+      actions.appendChild(copyBtn);
+
+      if (sender === 'user') {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'msg-action-btn';
+        editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+        editBtn.title = 'Edit & resend';
+        editBtn.onclick = () => {
+          document.getElementById('chatInput').value = text;
+          document.getElementById('chatInput').focus();
+          div.remove();
+          // Also remove from chatHistory if exists
+          const idx = chatHistory.findIndex(m => m.content === text && m.role === 'user');
+          if (idx >= 0) chatHistory.splice(idx, 1);
+        };
+        actions.appendChild(editBtn);
+      }
+
+      div.appendChild(actions);
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+      return div;
+    }
+
+    const chatHistory = [];
+
+    function quickChat(text) {
+      document.getElementById('chatInput').value = text;
+      sendChat();
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      appendMsg(text, 'user');
+      chatHistory.push({ role: 'user', content: text });
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+
+      const typingDiv = appendMsg('Thinking...', 'typing');
+      typingDiv.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, sessionId: currentSessionId })
+        });
+        const data = await res.json();
+        typingDiv.remove();
+        appendMsg(data.reply, 'bot');
+        chatHistory.push({ role: 'assistant', content: data.reply });
+        currentSessionId = data.sessionId;
+        loadHistory();
+      } catch (e) {
+        typingDiv.remove();
+        appendMsg('Connection error. Please try again.', 'bot');
+      }
+      btn.disabled = false;
+    }
+
+    async function loadHistory() {
+      try {
+        const sessions = await fetch('/api/chat/history').then(r => r.json());
+        const list = document.getElementById('historyList');
+        list.innerHTML = sessions.map(s =>
+          `<div class="history-item${currentSessionId === s._id ? ' active' : ''}" data-id="${s._id}">
+        <span class="hi-title">${s.title || 'Chat'}</span>
+        <button class="hi-del" data-id="${s._id}">&times;</button>
+      </div>`
+        ).join('');
+        list.querySelectorAll('.history-item').forEach(el => {
+          el.onclick = (e) => {
+            if (e.target.classList.contains('hi-del')) return;
+            loadSession(el.dataset.id);
+          };
+        });
+        list.querySelectorAll('.hi-del').forEach(el => {
+          el.onclick = async (e) => {
+            e.stopPropagation();
+            await fetch('/api/chat/session/' + el.dataset.id, { method: 'DELETE' });
+            if (currentSessionId === el.dataset.id) {
+              currentSessionId = null;
+              document.getElementById('chatBody').innerHTML = '<div class="msg bot">👋 Hello! I\'m King Food AI. How can I help you today?</div>';
+              chatHistory.length = 0;
+            }
+            loadHistory();
+          };
+        });
+      } catch (e) { /* not logged in */ }
+    }
+
+    async function loadSession(id) {
+      try {
+        const session = await fetch('/api/chat/session/' + id).then(r => r.json());
+        currentSessionId = session._id;
+        const body = document.getElementById('chatBody');
+        body.innerHTML = '';
+        chatHistory.length = 0;
+        session.messages.forEach(m => {
+          appendMsg(m.content, m.role);
+          chatHistory.push({ role: m.role, content: m.content });
+        });
+        if (session.messages.length === 0) {
+          body.innerHTML = '<div class="msg bot">👋 Hello! I\'m King Food AI. How can I help you today?</div>';
+        }
+        loadHistory();
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadProductsPanel() {
+      try {
+        const data = await fetch('/api/store/products').then(r => r.json());
+        allProducts = Array.isArray(data) ? data : data.products || [];
+        renderProductsPanel(allProducts);
+      } catch (e) {
+        document.getElementById('rightPanelBody').innerHTML = '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center;">Failed to load products</p>';
+      }
+    }
+
+    function renderProductsPanel(products) {
+      const body = document.getElementById('rightPanelBody');
+      body.innerHTML = products.map(p => {
+        const stars = '★'.repeat(Math.round(p.rating || 0)) + '☆'.repeat(5 - Math.round(p.rating || 0));
+        const oi = orderItems.find(i => i.id === p._id);
+        const qty = oi ? oi.qty : 0;
+        return `<div class="prod-card">
+      <img class="prod-img" src="${p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=200&q=60'}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=200&q=60'">
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-desc">${p.description || ''}</div>
+        <div class="prod-meta">
+          <span class="prod-price">$${(p.price || 0).toFixed(2)}</span>
+          <span class="prod-stars">${stars}</span>
+          <div class="prod-qty">
+            <button onclick="adjustOrder('${p._id}','${p.name.replace(/'/g, "\\'")}',${p.price || 0},-1)">−</button>
+            <span>${qty}</span>
+            <button onclick="adjustOrder('${p._id}','${p.name.replace(/'/g, "\\'")}',${p.price || 0},1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    async function loadWishlistPanel() {
+      try {
+        const data = await fetch('/api/user/wishlist').then(r => r.json());
+        allWishlist = Array.isArray(data) ? data : [];
+        const body = document.getElementById('rightPanelBody');
+        if (allWishlist.length === 0) {
+          body.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center;">Wishlist is empty</p>';
+          document.getElementById('orderSummary').style.display = 'none';
+          return;
+        }
+        body.innerHTML = allWishlist.map(p => {
+          if (!p) return '';
+          const stars = '★'.repeat(Math.round(p.rating || 0)) + '☆'.repeat(5 - Math.round(p.rating || 0));
+          const oi = orderItems.find(i => i.id === p._id);
+          const qty = oi ? oi.qty : 0;
+          return `<div class="prod-card">
+        <img class="prod-img" src="${p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=200&q=60'}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=200&q=60'">
+        <div class="prod-info">
+          <div class="prod-name">${p.name}</div>
+          <div class="prod-desc">${p.description || ''}</div>
+          <div class="prod-meta">
+            <span class="prod-price">$${(p.price || 0).toFixed(2)}</span>
+            <span class="prod-stars">${stars}</span>
+            <div class="prod-qty">
+              <button onclick="adjustOrder('${p._id}','${p.name.replace(/'/g, "\\'")}',${p.price || 0},-1)">−</button>
+              <span>${qty}</span>
+              <button onclick="adjustOrder('${p._id}','${p.name.replace(/'/g, "\\'")}',${p.price || 0},1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+        }).filter(Boolean).join('');
+      } catch (e) {
+        document.getElementById('rightPanelBody').innerHTML = '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center;">Login to see your wishlist</p>';
+      }
+    }
+
+    function adjustOrder(id, name, price, delta) {
+      const idx = orderItems.findIndex(i => i.id === id);
+      if (idx >= 0) {
+        orderItems[idx].qty += delta;
+        if (orderItems[idx].qty <= 0) orderItems.splice(idx, 1);
+      } else if (delta > 0) {
+        orderItems.push({ id, name, price, qty: 1 });
+      }
+      updateOrderSummary();
+      if (panelMode === 'products') renderProductsPanel(allProducts);
+      else loadWishlistPanel();
+    }
+
+    function updateOrderSummary() {
+      const summary = document.getElementById('orderSummary');
+      const total = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
+      const count = orderItems.reduce((s, i) => s + i.qty, 0);
+      if (count === 0) { summary.style.display = 'none'; return; }
+      summary.style.display = 'block';
+      document.getElementById('osCount').textContent = count + ' items';
+      document.getElementById('osTotal').textContent = '$' + total.toFixed(2);
+    }
+
+    // Init
+    loadHistory();
+  </script>
+</body>
+
+</html>

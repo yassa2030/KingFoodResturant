@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title>Book a Table - King Food</title>
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css' rel='stylesheet'>
+  <link rel='stylesheet' href='/site.css'>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="/i18n.js"></script>
+  <style>
+    .book-form-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .book-success {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+    .book-success.show {
+      display: block;
+      animation: fadeInUp 0.5s ease;
+    }
+    .book-success i {
+      font-size: 4rem;
+      color: #10b981;
+    }
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class='container py-4'>
+    <div class="book-form-container">
+      <a href='/home.html' class='btn btn-outline-light mb-3'>
+        <i class="bi bi-arrow-left"></i> <span data-i18n="nav_home">Home</span>
+      </a>
+      <h1 class="mb-4"><i class="bi bi-calendar-event text-warning"></i> <span data-i18n="bookTable_title">Book a Table</span></h1>
+      
+      <form id='bookForm' class='card p-4'>
+        <div class="form-section-title">
+          <i class="bi bi-person-fill"></i> <span data-i18n="profile_fullName">Personal Information</span>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><span data-i18n="bookTable_fullName">Full Name</span> *</label>
+          <input id='bn' class='form-control' placeholder='John Doe' required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><span data-i18n="bookTable_email">Email</span> *</label>
+          <input id='be' type='email' class='form-control' placeholder='john@example.com' required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><span data-i18n="bookTable_phone">Phone</span> *</label>
+          <input id='bp' class='form-control' placeholder='+1 234 567 8900' required>
+        </div>
+        
+        <div class="form-section-title mt-4">
+          <i class="bi bi-clock-fill"></i> <span data-i18n="bookTable_date">Reservation Details</span>
+        </div>
+        <div class='row'>
+          <div class='col-md-6 mb-3'>
+            <label class="form-label"><span data-i18n="bookTable_date">Date</span> *</label>
+            <input id='bd' type='date' class='form-control' required>
+          </div>
+          <div class='col-md-6 mb-3'>
+            <label class="form-label"><span data-i18n="bookTable_time">Time</span> *</label>
+            <input id='bt' type='time' class='form-control' required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><span data-i18n="bookTable_guests">Number of Guests</span> *</label>
+          <select id='bg' class='form-select' required>
+            <option value="">-- Select --</option>
+            <option value="1">1 Guest</option>
+            <option value="2">2 Guests</option>
+            <option value="3">3 Guests</option>
+            <option value="4">4 Guests</option>
+            <option value="5">5 Guests</option>
+            <option value="6">6 Guests</option>
+            <option value="7+">7+ Guests</option>
+          </select>
+          <div class="mt-2">
+            <a href='/menu.html' class='btn btn-outline-warning btn-sm'><i class="bi bi-eye"></i> <span data-i18n="view_menu">View Menu</span></a>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><span data-i18n="bookTable_requests">Special Requests</span> *</label>
+          <textarea id='br' class='form-control' placeholder='Any special requests or dietary requirements...' rows="3" required></textarea>
+        </div>
+        
+        <div id="orderItemsSection" class="mb-3" style="display:none">
+          <div class="form-section-title">
+            <i class="bi bi-basket-fill"></i> <span data-i18n="selected_menu_items">Selected Menu Items</span>
+          </div>
+          <div id="orderItemsList" class="list-group"></div>
+        </div>
+        
+        <button id="bookSubmitBtn" class='btn btn-primary w-100 mt-3'>
+          <i class="bi bi-check-circle"></i> <span data-i18n="bookTable_submit">Book Now</span>
+        </button>
+      </form>
+      
+      <div id="bookSuccess" class="book-success card">
+        <i class="bi bi-check-circle-fill"></i>
+        <h3 class="mt-3" data-i18n="bookTable_success">Your table reservation has been successfully submitted!</h3>
+        <p class="text-secondary">We'll send a confirmation email shortly.</p>
+        <a href='/home.html' class='btn btn-primary mt-3'>
+          <i class="bi bi-house"></i> Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <footer class='footer-kf p-3 text-center'>© 2026 King Food</footer>
+  
+  <script src='/site.js'></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('bookForm');
+      const successDiv = document.getElementById('bookSuccess');
+      const submitBtn = document.getElementById('bookSubmitBtn');
+      const orderItemsSection = document.getElementById('orderItemsSection');
+      const orderItemsList = document.getElementById('orderItemsList');
+      let orderItems = [];
+      
+      // Check if redirected from menu with selected items
+      const params = new URLSearchParams(location.search);
+      if (params.get('order') === 'true') {
+        const stored = localStorage.getItem('bookingOrderItems');
+        if (stored) {
+          try {
+            orderItems = JSON.parse(stored);
+            localStorage.removeItem('bookingOrderItems');
+          } catch(e) { orderItems = []; }
+        }
+      }
+      
+      if (orderItems.length > 0) {
+        orderItemsSection.style.display = 'block';
+        orderItemsList.innerHTML = orderItems.map(item => 
+          `<div class="list-group-item d-flex justify-content-between align-items-center">
+            <span>${item.name} <span class="badge bg-warning text-dark">x${item.qty}</span></span>
+            <span class="text-warning fw-bold">$${(item.price * item.qty).toFixed(2)}</span>
+          </div>`
+        ).join('');
+      }
+      
+      if (form) {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          
+          // Validate all required fields
+          const required = form.querySelectorAll('[required]');
+          let valid = true;
+          required.forEach(el => { if (!el.value) valid = false; });
+          if (!valid) { toast('Please fill all required fields', false); return; }
+          
+          // Show loading state
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Booking...';
+          
+          try {
+            const bookingData = {
+              fullName: document.getElementById('bn').value,
+              email: document.getElementById('be').value,
+              phone: document.getElementById('bp').value,
+              date: document.getElementById('bd').value,
+              time: document.getElementById('bt').value,
+              guests: document.getElementById('bg').value,
+              requests: document.getElementById('br').value
+            };
+            
+            // Include order items if any
+            if (orderItems.length > 0) {
+              bookingData.orderItems = orderItems;
+            }
+            
+            // Save to MongoDB via API
+            await api('/api/user/bookings', {
+              method: 'POST',
+              body: JSON.stringify(bookingData)
+            });
+            
+            // Hide form, show success
+            form.style.display = 'none';
+            successDiv.classList.add('show');
+            
+            // Trigger confetti
+            triggerConfetti();
+            
+            // Show success toast
+            toast('Your table reservation has been successfully submitted!', true);
+            
+          } catch (err) {
+            toast(err.message || 'Failed to book table. Please try again.', false);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Book Now';
+          }
+        };
+      }
+    });
+  </script>
+</body>
+</html>

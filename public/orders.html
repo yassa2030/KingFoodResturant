@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang='en'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width,initial-scale=1'>
+    <title>My Orders</title>
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='/site.css'>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="/i18n.js"></script>
+</head>
+
+<body class='p-3'>
+    <nav class='navbar navbar-expand-lg nav-theme sticky-top mb-4'>
+        <div class='container-fluid'>
+            <a class='navbar-brand fw-bold' href='/home.html'>King Food</a>
+            <button class='navbar-toggler' data-bs-toggle='collapse' data-bs-target='#navMain'>
+                <span class='navbar-toggler-icon'></span>
+            </button>
+            <div class='collapse navbar-collapse' id='navMain'>
+                <ul class='navbar-nav ms-auto'>
+                    <li class='nav-item'><a class='nav-link' href='/profile.html'>Profile</a></li>
+                    <li class='nav-item'><a class='nav-link' href='/home.html'>Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class='container'>
+        <div class='d-flex justify-content-between align-items-center mb-4'>
+            <h2>My Orders</h2>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class='orders-filter-bar'>
+            <span class='text-muted me-2'>Filter by status:</span>
+            <button class='filter-btn active' data-filter='all'>All</button>
+            <button class='filter-btn' data-filter='processing'>Processing</button>
+            <button class='filter-btn' data-filter='shipping'>Shipping</button>
+            <button class='filter-btn' data-filter='delivered'>Delivered</button>
+            <button class='filter-btn' data-filter='cancelled'>Canceled</button>
+        </div>
+
+        <!-- Orders List -->
+        <div id='ordersList' class='orders-list'></div>
+
+        <!-- Empty State -->
+        <div id='emptyState' class='text-center text-muted py-5' style='display:none;'>
+            <i class='bi bi-inbox' style='font-size:48px;opacity:0.5;'></i>
+            <p class='mt-3'>No orders found</p>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'></script>
+    <script src='/site.js'></script>
+    <script>
+        // Orders filtering functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            let allOrders = [];
+
+            // Apply filter
+            const applyOrderFilter = (filter) => {
+                const filtered = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
+                renderOrdersList(filtered);
+            };
+
+            // Render orders
+            const renderOrdersList = (orders) => {
+                const ordersList = document.getElementById('ordersList');
+                const emptyState = document.getElementById('emptyState');
+
+                if (!orders || orders.length === 0) {
+                    ordersList.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                ordersList.innerHTML = orders.map(o => `
+                    <div class='order-card'>
+                        <div class='order-header'>
+                            <div>
+                                <div class='order-no'>${o.orderNo || 'Order #' + o._id}</div>
+                                <small class='text-muted'>${new Date(o.createdAt).toLocaleString()}</small>
+                            </div>
+                            <span class='order-status ${o.status || "processing"}'>${(o.status || 'processing').toUpperCase()}</span>
+                        </div>
+                        
+                        <div class='order-items'>
+                            ${(o.items || []).map(i => `
+                                <div class='order-item'>
+                                    <img src='${i.product?.imageUrl || i.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=60"}' alt='${i.name}'>
+                                    <div class='order-item-details'>
+                                        <b>${i.name || i.product?.name || 'Product'}</b>
+                                        <small>Qty: ${i.qty} × $${(i.price || i.product?.price || 0).toFixed(2)}</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class='order-summary'>
+                            <div class='summary-item'>
+                                <div class='label'>Subtotal</div>
+                                <div class='value'>$${((o.total || 0) - (o.tax || 0) - (o.shipping || 0)).toFixed(2)}</div>
+                            </div>
+                            <div class='summary-item'>
+                                <div class='label'>Tax</div>
+                                <div class='value'>$${(o.tax || 0).toFixed(2)}</div>
+                            </div>
+                            <div class='summary-item'>
+                                <div class='label'>Shipping</div>
+                                <div class='value'>$${(o.shipping || 0).toFixed(2)}</div>
+                            </div>
+                            <div class='summary-item'>
+                                <div class='label'>Total</div>
+                                <div class='value'>$${(o.total || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            // Fetch and setup filters
+            const setupOrderFilters = async () => {
+                try {
+                    allOrders = await api('/api/user/orders');
+                    renderOrdersList(allOrders);
+
+                    filterBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            filterBtns.forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            applyOrderFilter(btn.dataset.filter);
+                        });
+                    });
+                } catch (error) {
+                    document.getElementById('ordersList').innerHTML = '<p class="text-danger">Error loading orders</p>';
+                }
+            };
+
+            setupOrderFilters();
+        });
+    </script>
+</body>
+
+</html>

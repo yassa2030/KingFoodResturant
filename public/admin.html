@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>King Food Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" id="sidebarClose">&times;</button>
+      <div class="brand-box"><img src="./assets/KingfoodPNG (1).png" class="chef-logo" alt="logo" />
+       <br><br> <h3>King Food</h3>
+        
+      </div>
+      <nav class="menu" id="menuNav">
+        <button class="menu-item active" data-section="analysis"><i class="bi bi-bar-chart"></i> Analysis</button>
+        <button class="menu-item" data-section="categories"><i class="bi bi-grid"></i> Categories</button>
+        <button class="menu-item" data-section="products"><i class="bi bi-box"></i> Products</button>
+        <button class="menu-item" data-section="orders"><i class="bi bi-bag"></i> Orders</button>
+        <button class="menu-item" data-section="users"><i class="bi bi-people"></i> Users</button>
+        <button class="menu-item" data-section="coupons"><i class="bi bi-ticket"></i> Coupons</button>
+        <button class="menu-item" data-section="notifications"><i class="bi bi-bell"></i> Notifications</button>
+        <button class="menu-item" data-section="bookings"><i class="bi bi-calendar-check"></i> Book Table</button>
+        <button class="menu-item" data-section="conversations"><i class="bi bi-chat-dots"></i> Conversations</button>
+        <button class="menu-item" data-section="logs"><i class="bi bi-journal"></i> Logs</button>
+      </nav>
+      <div class="admin-meta" id="adminMeta">Admin<br><small>admin@kingfood.com</small></div>
+      <button id="logoutBtn" class="install-btn"><i class="bi bi-box-arrow-right"></i> Logout</button>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <main class="content p-4">
+      <button class="menu-toggle btn btn-dark mb-3 d-lg-none" id="menuToggle">≣ Menu</button>
+      <section id="section-analysis" class="section-panel active">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2>Analytics</h2><select id="rangeSelect" class="form-select w-auto">
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last Month</option>
+            <option value="365d">Last Year</option>
+          </select>
+        </div>
+        <div class="row g-3 mt-1" id="kpiCards"></div>
+        <div class="row g-3 mt-2">
+          <div class="col-lg-8">
+            <div class="card p-3">
+              <h5>Revenue Series</h5><canvas id="barChart" height="120"></canvas>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card p-3">
+              <h5>Orders by Status</h5><canvas id="pieChart" height="220"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card p-3 mt-3">
+          <h5>Top Selling Products</h5>
+          <ul id="topSelling"></ul>
+        </div>
+        <div class="card p-3 mt-3">
+          <h5>MongoDB Realtime Storage Status</h5>
+          <div id="storageMetrics"></div>
+        </div>
+      </section>
+
+      <section id="section-categories" class="section-panel">
+        <div class="section-head">
+          <h2>Categories</h2>
+          <div class="d-flex gap-2"><button class="btn btn-secondary" id="seedBtn">Import 15 APIs</button><button
+              class="btn btn-danger" id="addCategoryBtn">Add New Category</button></div>
+        </div>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name EN</th>
+                <th>Name AR</th>
+                <th>Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="section-products" class="section-panel">
+        <div class="section-head">
+          <h2>Products</h2><button class="btn btn-danger" id="addProductBtn">Add New Product</button>
+        </div>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-orders" class="section-panel">
+        <h2>Orders</h2>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-users" class="section-panel">
+        <h2>Users</h2>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Orders</th>
+                <th>Total Spent</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-coupons" class="section-panel">
+        <div class="section-head">
+          <h2>Coupons</h2><button class="btn btn-danger" id="addCouponBtn">Create Promo Code</button>
+        </div>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Discount</th>
+                <th>Usage</th>
+                <th>Valid Period</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="couponsBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-notifications" class="section-panel">
+        <div class="section-head">
+          <h2>Notifications</h2><button class="btn btn-danger" id="addNotifBtn">Send Notification</button>
+        </div>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>User</th>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="notifsBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-conversations" class="section-panel">
+        <div class="admin-chat-layout">
+          <div class="admin-chat-list" id="adminConvList">
+            <h5 style="padding:12px 16px;margin:0;border-bottom:1px solid var(--border-color);font-size:.9rem"><i
+                class="bi bi-chat-dots"></i> Conversations</h5>
+            <div id="adminConvUsers"></div>
+          </div>
+          <div class="admin-chat-main">
+            <div class="admin-chat-placeholder" id="adminChatPlaceholder">
+              <i class="bi bi-chat-dots"></i>
+              <h6>Select a conversation</h6>
+              <p style="color:var(--text-secondary);font-size:.85rem">Choose a user from the left to view messages</p>
+            </div>
+            <div class="admin-chat-active" id="adminChatActive" style="display:none;flex-direction:column;height:100%">
+              <div class="admin-chat-header" id="adminChatHeader"></div>
+              <div class="admin-chat-msgs" id="adminChatMsgs"></div>
+              <div id="adminReplyIndicator"
+                style="display:none;padding:6px 16px;font-size:.8rem;background:var(--accent);color:#fff"></div>
+              <div class="admin-chat-input">
+                <button class="admin-chat-attach" id="adminChatAttach"><i class="bi bi-paperclip"></i></button>
+                <input type="file" id="adminChatFile" style="display:none">
+                <input type="text" id="adminChatInput" placeholder="Type a reply..."
+                  style="flex:1;border:1px solid var(--border-color);border-radius:24px;padding:10px 16px;background:var(--panel-bg);color:var(--text-color);outline:none">
+                <button class="admin-chat-send" id="adminChatSend"><i class="bi bi-send-fill"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="section-bookings" class="section-panel">
+        <h2>Book Table</h2>
+        <div class="table-responsive card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Guests</th>
+                <th>Requests</th>
+                <th>Order Items</th>
+                <th>Booked At</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="section-logs" class="section-panel">
+        <h2>Logs</h2>
+        <div class="card p-3">
+          <ul id="logsBody" class="log-list"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal fade" id="genericModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="modalTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/admin.js"></script>
+</body>
+
+</html>

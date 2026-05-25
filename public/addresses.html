@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Shipping Address - King Food</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/site.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="/i18n.js"></script>
+    <style>
+      .address-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+      }
+      .address-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      }
+      .address-card.default {
+        border-left-color: var(--accent);
+        background: rgba(255, 107, 53, 0.05);
+      }
+      .address-form-section {
+        display: none;
+        animation: fadeInUp 0.4s ease;
+      }
+      .address-form-section.show {
+        display: block;
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+</head>
+<body class="p-4">
+  <div class="container">
+    <a href="/profile.html" class="btn btn-outline-light mb-3">
+      <i class="bi bi-arrow-left"></i> <span data-i18n="common_back">Back</span>
+    </a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="bi bi-geo-alt text-warning"></i> <span data-i18n="addresses_title">My Addresses</span></h2>
+      <button id="addAddrBtn" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> <span data-i18n="addresses_addNew">Add New Address</span>
+      </button>
+    </div>
+
+    <!-- Add Address Form -->
+    <div id="addAddressForm" class="address-form-section card p-4 mb-4">
+      <h5 class="mb-3"><i class="bi bi-plus-circle"></i> <span data-i18n="addresses_addNew">Add New Address</span></h5>
+      <form id="newAddressForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_fullName">Full Name</span> *</label>
+            <input name="fullName" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_phone">Phone Number</span> *</label>
+            <input name="phone" type="tel" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_country">Country</span></label>
+            <input name="country" class="form-control" placeholder="Egypt">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_city">City</span> *</label>
+            <input name="city" class="form-control" required>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label"><span data-i18n="addresses_street">Street Address</span> *</label>
+            <input name="streetAddress" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><span data-i18n="addresses_zipCode">Postal Code</span></label>
+            <input name="zipCode" class="form-control" placeholder="12345">
+          </div>
+          <div class="col-12">
+            <label class="form-label"><span data-i18n="addresses_notes">Additional Notes</span></label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Apartment, building, floor, etc."></textarea>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input type="checkbox" name="isDefault" class="form-check-input" id="addrDefault">
+              <label class="form-check-label" for="addrDefault"><span data-i18n="addresses_setDefault">Set as Default</span></label>
+            </div>
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-circle"></i> <span data-i18n="common_save">Save</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('addAddressForm').classList.remove('show')">
+              <span data-i18n="common_cancel">Cancel</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Edit Address Form -->
+    <div id="editAddressForm" class="address-form-section card p-4 mb-4">
+      <h5 class="mb-3"><i class="bi bi-pencil"></i> <span data-i18n="common_edit">Edit Address</span></h5>
+      <form id="editAddressFormData">
+        <input type="hidden" name="id" id="editAddressId">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_fullName">Full Name</span></label>
+            <input name="fullName" id="editFullName" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_phone">Phone Number</span></label>
+            <input name="phone" id="editPhone" type="tel" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_country">Country</span></label>
+            <input name="country" id="editCountry" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><span data-i18n="addresses_city">City</span></label>
+            <input name="city" id="editCity" class="form-control" required>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label"><span data-i18n="addresses_street">Street Address</span></label>
+            <input name="streetAddress" id="editStreetAddress" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><span data-i18n="addresses_zipCode">Postal Code</span></label>
+            <input name="zipCode" id="editZipCode" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label"><span data-i18n="addresses_notes">Additional Notes</span></label>
+            <textarea name="notes" id="editNotes" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-circle"></i> <span data-i18n="common_save">Save Changes</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="cancelEditAddress()">
+              <span data-i18n="common_cancel">Cancel</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Addresses List -->
+    <div id="addressList" class="row g-3"></div>
+  </div>
+
+  <script src="/site.js"></script>
+</body>
+</html>

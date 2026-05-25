@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>King Food - Food Menu</title>
+  <link rel="icon" href="assets/logo-chef.svg">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Raleway:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="/i18n.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --gold: #d4a017;
+    --gold-light: #f0c040;
+    --gold-dark: #a07810;
+    --bg-dark: #1a1410;
+    --bg-card: #221c14;
+    --bg-section: #2a2018;
+    --text-white: #f5f0e8;
+    --text-muted: #b8a882;
+    --red-accent: #c0392b;
+    --green-accent: #27ae60;
+  }
+
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-white);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── DARK / LIGHT MODE (preserved from old menu) ── */
+  body.light-mode {
+    --bg-dark: #f5f0e8;
+    --bg-card: #fff8ee;
+    --bg-section: #fdf5e0;
+    --text-white: #1a1410;
+    --text-muted: #7a6a4a;
+  }
+  body.light-mode .navbar { background: #fff8ee !important; border-bottom: 1px solid #e0d0a0; }
+  body.light-mode .menu-header { background: linear-gradient(160deg,#fffbe8,#f5ead0,#ffe8b0); }
+  body.light-mode .menu-section { background: #fff8ee; }
+  body.light-mode .deal-card { background: #fff8ee; }
+  body.light-mode .combo-card { background: linear-gradient(135deg,#fffbe8,#f5ead0); }
+  body.light-mode .ticker-wrap { background: linear-gradient(90deg,#8b0000,#c0392b,#8b0000); }
+  body.light-mode .confirm-bar { background: #fff8ee; border-top: 1px solid #e0d0a0; }
+  body.light-mode .confirm-bar .order-summary { color: #5a4a2a; }
+  body.light-mode .confirm-bar .order-summary strong { color: #1a1410; }
+
+  a { text-decoration: none; color: inherit; }
+
+  /* ── LOADING ── */
+  #loadingScreen {
+    position: fixed; inset: 0;
+    background: var(--bg-dark);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999; transition: opacity 0.6s ease;
+  }
+  #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+  .loader-ring {
+    width: 64px; height: 64px;
+    border: 4px solid rgba(212,160,23,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { color: var(--gold); font-size: 1.1rem; font-weight: 700; letter-spacing: 2px; }
+
+  /* ── NAVBAR (preserved from old menu) ── */
+  .navbar { background: #111 !important; border-bottom: 1px solid #2a2a2a; }
+  .navbar-brand { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg,#ff6b35,#f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .nav-link { color: #ccc !important; font-size: .9rem; transition: color .2s; }
+  .nav-link:hover, .nav-link.active { color: var(--gold-light) !important; }
+  .badge-count { position: absolute; top: -4px; right: -4px; background: #ff6b35; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: .65rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+  /* ── HEADER ── */
+  .menu-header {
+    position: relative;
+    background: linear-gradient(160deg, #0d0b07 0%, #1a1410 40%, #221c14 100%);
+    padding: 32px 20px 24px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 3px solid var(--gold-dark);
+  }
+  .menu-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .corner-leaves { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
+  .corner-leaves::before, .corner-leaves::after {
+    content: '🍃'; position: absolute;
+    font-size: 48px; opacity: 0.25;
+    filter: sepia(1) saturate(2) hue-rotate(20deg);
+  }
+  .corner-leaves::before { top: 8px; left: 12px; transform: rotate(-30deg); }
+  .corner-leaves::after  { top: 8px; right: 12px; transform: rotate(30deg) scaleX(-1); }
+  .logo-box {
+    display: inline-block;
+    background: linear-gradient(135deg, #fff 60%, #f5ead0 100%);
+    border-radius: 18px;
+    padding: 10px 32px 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 16px rgba(212,160,23,0.25);
+  }
+  .logo-box .restaurant-name { font-size: 1.7rem; font-weight: 900; color: #b8860b; letter-spacing: 1px; font-family: 'Playfair Display', serif; }
+  .logo-box .restaurant-sub  { font-size: 0.78rem; color: #888; font-weight: 500; letter-spacing: 0.5px; }
+  .main-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    font-weight: 900; color: #fff;
+    letter-spacing: 8px; text-transform: uppercase;
+    line-height: 1; margin: 8px 0 4px;
+    text-shadow: 0 2px 32px rgba(212,160,23,0.18);
+  }
+  .main-title span { color: var(--gold-light); }
+  .gold-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 10px auto; max-width: 500px; justify-content: center;
+  }
+  .gold-divider .line    { flex: 1; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .gold-divider .diamond { width: 10px; height: 10px; background: var(--gold); transform: rotate(45deg); flex-shrink: 0; }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    background: linear-gradient(90deg, #8b0000 0%, #c0392b 40%, #8b0000 100%);
+    overflow: hidden;
+    padding: 11px 0;
+    position: relative;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 60px;
+    z-index: 2; pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0;  background: linear-gradient(90deg,  #8b0000, transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(270deg, #8b0000, transparent); }
+  .ticker-track {
+    display: flex; gap: 0;
+    animation: ticker 28s linear infinite;
+    white-space: nowrap; width: max-content;
+  }
+  .ticker-track:hover { animation-play-state: paused; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 0.95rem; font-weight: 800;
+    color: #fff; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0 40px;
+  }
+  .ticker-item .star { color: var(--gold-light); font-size: 1rem; }
+  .ticker-separator {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--gold-light); border-radius: 50%;
+    margin: 0 8px; vertical-align: middle;
+  }
+
+  /* ── PHOTO ROW ── */
+  .photo-row {
+    display: flex; justify-content: center; gap: 16px;
+    padding: 14px 16px 0; flex-wrap: wrap;
+  }
+  .photo-circle {
+    width: 88px; height: 88px; border-radius: 50%;
+    object-fit: cover; border: 3px solid var(--gold-dark);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .photo-circle:hover { transform: scale(1.1); border-color: var(--gold-light); }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: inline-block; background: var(--gold);
+    color: #1a1410; font-weight: 900; font-size: 1.1rem;
+    padding: 6px 22px; border-radius: 4px;
+    margin-bottom: 18px; letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(212,160,23,0.3);
+    text-transform: uppercase;
+  }
+
+  /* ── DEALS ── */
+  .deals-section { padding: 28px 16px 10px; max-width: 1100px; margin: 0 auto; }
+  .deals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .deal-card {
+    background: var(--bg-card); border: 1px solid var(--gold-dark);
+    border-radius: 14px; overflow: hidden; position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .deal-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(212,160,23,0.2); }
+  .deal-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--red-accent); color: #fff;
+    font-size: 0.75rem; font-weight: 800;
+    padding: 3px 10px; border-radius: 20px;
+    z-index: 2; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .deal-img-wrap { width: 100%; height: 160px; overflow: hidden; position: relative; }
+  .deal-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+  .deal-card:hover .deal-img-wrap img { transform: scale(1.07); }
+  .deal-img-wrap::after {
+    content: ''; position: absolute;
+    bottom: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  }
+  .deal-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; }
+  .deal-name { font-size: 1rem; font-weight: 700; color: var(--text-white); margin-bottom: 4px; line-height: 1.3; }
+    .deal-desc {
+    font-size: 0.78rem; color: var(--text-muted);
+    margin-bottom: 10px; line-height: 1.5; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .deal-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
+  .price-wrap { display: flex; align-items: center; gap: 8px; }
+  .price-original { font-size: 0.78rem; color: var(--text-muted); text-decoration: line-through; }
+  .price-deal { font-size: 1.1rem; font-weight: 900; color: var(--gold-light); }
+  .deal-rating { display: flex; align-items: center; gap: 3px; font-size: 0.75rem; color: var(--gold); font-weight: 700; }
+
+  /* qty controls (preserved logic) */
+  .qty-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .qty-controls button {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--gold); background: transparent;
+    color: var(--gold); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .qty-controls button:hover { background: var(--gold); color: #1a1410; }
+  .qty-controls .qty-val { font-weight: 700; min-width: 20px; text-align: center; color: var(--text-white); }
+
+  /* ── COMBOS ── */
+  .combo-section { max-width: 1100px; margin: 0 auto; padding: 0 16px 20px; }
+  .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .combo-card {
+    background: linear-gradient(135deg, #2a1e0f 0%, #1a1410 100%);
+    border: 2px solid var(--gold-dark); border-radius: 16px;
+    padding: 18px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .combo-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(212,160,23,0.12) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .combo-tag {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    color: #1a1410; font-size: 0.72rem; font-weight: 900;
+    padding: 3px 12px; border-radius: 20px;
+    margin-bottom: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .combo-title { font-size: 1.1rem; font-weight: 800; color: var(--text-white); margin-bottom: 8px; }
+  .combo-items-list { list-style: none; margin-bottom: 14px; flex: 1; }
+  .combo-items-list li {
+    font-size: 0.83rem; color: var(--text-muted);
+    padding: 3px 0; display: flex; align-items: center; gap: 6px;
+  }
+  .combo-items-list li::before { content: '✦'; color: var(--gold); font-size: 0.65rem; flex-shrink: 0; }
+  .combo-pricing {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px; border-top: 1px solid rgba(212,160,23,0.2);
+    margin-bottom: 10px;
+  }
+  .combo-save  { font-size: 0.78rem; color: var(--green-accent); font-weight: 700; }
+  .combo-price { font-size: 1.3rem; font-weight: 900; color: var(--gold-light); }
+
+  /* ── CATEGORY TABS ── */
+  .cat-tabs {
+    max-width: 1100px; margin: 0 auto 20px;
+    padding: 0 16px;
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  }
+  .cat-tab {
+    background: var(--bg-card); border: 1px solid var(--gold-dark);
+    color: var(--gold); font-size: 0.82rem; font-weight: 700;
+    padding: 6px 16px; border-radius: 20px;
+    cursor: pointer; transition: all 0.25s ease;
+    font-family: 'Raleway', sans-serif; text-transform: uppercase;
+  }
+  .cat-tab:hover, .cat-tab.active { background: var(--gold); color: #1a1410; border-color: var(--gold); }
+
+  /* ── MENU TABLES ── */
+  .menu-main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 16px 40px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  @media (max-width: 720px) { .menu-main { grid-template-columns: 1fr; } }
+  .menu-section {
+    background: var(--bg-section);
+    border: 1px solid rgba(212,160,23,0.2);
+    border-radius: 14px; overflow: hidden;
+  }
+  .menu-section.full-width { grid-column: 1 / -1; }
+  .menu-section-header {
+    background: var(--gold); padding: 8px 18px;
+    font-size: 1rem; font-weight: 900;
+    color: #1a1410; letter-spacing: 1px;
+    text-align: center; text-transform: uppercase;
+  }
+  .menu-table { width: 100%; border-collapse: collapse; }
+  .menu-table thead tr { background: rgba(212,160,23,0.08); }
+  .menu-table thead th {
+    padding: 8px 12px; font-size: 0.8rem;
+    color: var(--gold); font-weight: 700;
+    border-bottom: 1px solid rgba(212,160,23,0.15);
+    text-align: left;
+  }
+  .menu-table thead th:last-child { text-align: right; }
+  .menu-table thead th.th-disc { text-align: center; }
+  .disc-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--red-accent);
+    color: #fff; font-size: 0.7rem; font-weight: 800;
+    padding: 2px 7px; border-radius: 12px;
+    letter-spacing: 0.4px; white-space: nowrap;
+  }
+  .disc-badge.high { background: #b71c1c; }
+  .disc-badge.mid  { background: #c0392b; }
+  .disc-badge.low  { background: #d35400; }
+  .price-col { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .price-orig-small { font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; font-weight: 500; }
+  .price-final { font-size: 0.92rem; font-weight: 800; color: var(--gold-light); }
+  .saved-label { font-size: 0.65rem; color: var(--green-accent); font-weight: 700; }
+  .menu-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; }
+  .menu-table tbody tr:hover { background: rgba(212,160,23,0.06); }
+  .menu-table tbody tr:last-child { border-bottom: none; }
+  .menu-table td { padding: 9px 12px; font-size: 0.88rem; color: var(--text-white); vertical-align: middle; }
+  .menu-table td:last-child { text-align: right; color: var(--gold-light); font-weight: 700; white-space: nowrap; }
+  .item-name-cell { display: flex; align-items: center; gap: 6px; }
+  .item-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+  .item-country { font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 2px; }
+
+  /* ── CONFIRM BAR (preserved from old menu) ── */
+  .confirm-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #111; border-top: 1px solid #2a2a2a;
+    padding: 12px 5%;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 999;
+    transform: translateY(100%);
+    transition: transform .4s cubic-bezier(0.68,-0.55,0.27,1.55);
+  }
+  .confirm-bar.show { transform: translateY(0); }
+  .confirm-bar .order-summary { color: #ccc; font-size: .85rem; }
+  .confirm-bar .order-summary strong { color: #fff; }
+  .confirm-bar .btn-confirm {
+    padding: 10px 28px; border-radius: 30px;
+    background: linear-gradient(135deg, var(--gold), #f59e0b);
+    color: #1a1410; border: none;
+    font-weight: 700; font-size: .9rem; cursor: pointer;
+    transition: all .3s; display: flex; align-items: center; gap: 8px;
+  }
+  .confirm-bar .btn-confirm:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(212,160,23,0.4); }
+
+  /* ── FOOTER ── */
+  .menu-footer {
+    background: linear-gradient(90deg, #0d0b07, #1a1410, #0d0b07);
+    border-top: 2px solid var(--gold-dark);
+    padding: 20px 16px 100px; text-align: center;
+  }
+  .footer-copy { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; letter-spacing: 1px; }
+
+  /* ── FADE IN ── */
+  .fade-in { opacity: 0; transform: translateY(16px); animation: fadeUp 0.5s ease forwards; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  .fade-in:nth-child(1) { animation-delay: 0.05s; }
+  .fade-in:nth-child(2) { animation-delay: 0.10s; }
+  .fade-in:nth-child(3) { animation-delay: 0.15s; }
+  .fade-in:nth-child(4) { animation-delay: 0.20s; }
+  .fade-in:nth-child(5) { animation-delay: 0.25s; }
+  .fade-in:nth-child(6) { animation-delay: 0.30s; }
+  .fade-in:nth-child(7) { animation-delay: 0.35s; }
+  .fade-in:nth-child(8) { animation-delay: 0.40s; }
+
+  .error-msg { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 1rem; }
+
+  @media (max-width: 768px) {
+    .deals-grid { grid-template-columns: 1fr 1fr; }
+    .combo-grid { grid-template-columns: 1fr; }
+    .deal-img-wrap { height: 120px; }
+  }
+  @media (max-width: 500px) {
+    .main-title { font-size: 2.2rem; letter-spacing: 4px; }
+    .deals-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Loading Menu...</div>
+</div>
+
+<!-- ── NAVBAR (preserved from old menu) ── -->
+<nav class='navbar navbar-expand-lg sticky-top' style="z-index:1000">
+  <div class='container-fluid'>
+    <a class='navbar-brand fw-bold' href='/home.html'>King Food</a>
+    <button class='navbar-toggler' data-bs-toggle='collapse' data-bs-target='#navMain'><span class='navbar-toggler-icon'></span></button>
+    <div class='collapse navbar-collapse' id='navMain'>
+      <ul class='navbar-nav me-auto'>
+        <li class='nav-item'><a class='nav-link' href='/home.html'>Back to Home </a></li>
+        
+      </ul>
+      
+    </div>
+  </div>
+</nav>
+
+<!-- ── HEADER ── -->
+<header class="menu-header">
+  <div class="corner-leaves"></div>
+  <div class="logo-box">
+    <div class="restaurant-name">🍽️ King Food</div>
+    <div class="restaurant-sub">Premium Cuisine &amp; Fine Dining</div>
+  </div>
+  <div class="main-title">FOOD <span>MENU</span></div>
+  <div class="gold-divider">
+    <div class="line"></div>
+    <div class="diamond"></div>
+    <div class="diamond"></div>
+    <div class="diamond"></div>
+    <div class="line"></div>
+  </div>
+</header>
+
+<!-- ── TICKER ── -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- ── FEATURED PHOTOS ── -->
+<div class="photo-row" id="photoRow"></div>
+
+<!-- ── DEALS ── -->
+<div class="deals-section">
+  <div class="section-header">🔥 Today's Featured Deals &amp; Discounts</div>
+  <div class="deals-grid" id="dealsGrid">
+    <div class="error-msg">Loading...</div>
+  </div>
+</div>
+
+<!-- ── COMBOS ── -->
+<div class="combo-section">
+  <div class="section-header">🎁 Bundle Meals — Special Prices</div>
+  <div class="combo-grid" id="comboGrid">
+    <div class="error-msg">Loading...</div>
+  </div>
+</div>
+
+<!-- ── CATEGORY TABS ── -->
+<div class="cat-tabs" id="catTabs"></div>
+
+<!-- ── MAIN MENU ── -->
+<div class="menu-main" id="menuMain">
+  <div class="error-msg" style="grid-column:1/-1">Loading...</div>
+</div>
+
+<!-- ── CONFIRM BAR (preserved from old menu) ── -->
+<div class="confirm-bar" id="confirmBar">
+  <div class="order-summary" id="orderSummary">
+    <span data-i18n="selected_items">Selected Items</span>: <strong id="orderCount">0</strong>
+  </div>
+  <button class="btn-confirm" id="confirmOrderBtn">
+    <i class="bi bi-check2-circle"></i>
+    <span data-i18n="confirm_order_book">Confirm &amp; Book a Table</span>
+  </button>
+</div>
+
+<footer class="menu-footer">
+  <div class="footer-copy">© 2026 King Food Restaurant — Premium Cuisine &amp; Fine Dining</div>
+</footer>
+
+<!-- site.js (preserved, handles theme toggle / lang toggle / badges) -->
+<script src="/site.js"></script>
+
+<script>
+/* =========================================================
+   ORDER MANAGEMENT  (preserved from old menu)
+   ========================================================= */
+const orderItems = {};
+
+function updateConfirmBar() {
+  const total = Object.values(orderItems).reduce((s, i) => s + i.qty, 0);
+  document.getElementById('orderCount').textContent = total;
+  document.getElementById('confirmBar').classList.toggle('show', total > 0);
+}
+
+function addItem(name, price) {
+  if (orderItems[name]) { orderItems[name].qty++; }
+  else { orderItems[name] = { name, price, qty: 1 }; }
+  syncQtyDisplay(name);
+  updateConfirmBar();
+}
+
+function removeItem(name) {
+  if (!orderItems[name]) return;
+  orderItems[name].qty--;
+  if (orderItems[name].qty <= 0) delete orderItems[name];
+  syncQtyDisplay(name);
+  updateConfirmBar();
+}
+
+function syncQtyDisplay(name) {
+  document.querySelectorAll(`.qty-controls[data-name="${CSS.escape(name)}"] .qty-val`).forEach(el => {
+    el.textContent = orderItems[name]?.qty || 0;
+  });
+}
+
+function bindQtyControls(root) {
+  root.querySelectorAll('.qty-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ctrl = btn.closest('.qty-controls');
+      addItem(ctrl.dataset.name, parseFloat(ctrl.dataset.price));
+    });
+  });
+  root.querySelectorAll('.qty-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ctrl = btn.closest('.qty-controls');
+      removeItem(ctrl.dataset.name);
+    });
+  });
+}
+
+/* Confirm order → book table (preserved from old menu) */
+document.getElementById('confirmOrderBtn').addEventListener('click', () => {
+  const items = Object.values(orderItems).filter(i => i.qty > 0);
+  if (items.length === 0) {
+    if (typeof toast === 'function') toast('Please select at least one item', false);
+    return;
+  }
+  localStorage.setItem('bookingOrderItems', JSON.stringify(items));
+  location.href = '/contact.html?order=true';
+});
+
+/* =========================================================
+   API CONFIG
+   ========================================================= */
+const BASE = 'https://free-food-menus-api-two.vercel.app';
+
+const CATEGORIES = [
+  { key: 'best-foods',    label: 'Best Foods',    emoji: '⭐' },
+  { key: 'burgers',       label: 'Burgers',       emoji: '🍔' },
+  { key: 'pizzas',        label: 'Pizzas',        emoji: '🍕' },
+  { key: 'sandwiches',    label: 'Sandwiches',    emoji: '🥪' },
+  { key: 'fried-chicken', label: 'Fried Chicken', emoji: '🍗' },
+  { key: 'steaks',        label: 'Steaks',        emoji: '🥩' },
+  { key: 'drinks',        label: 'Drinks',        emoji: '🥤' },
+  { key: 'desserts',      label: 'Desserts',      emoji: '🍰' },
+  { key: 'ice-cream',     label: 'Ice Cream',     emoji: '🍦' },
+  { key: 'bbqs',          label: 'BBQ',           emoji: '🔥' },
+  { key: 'breads',        label: 'Breads',        emoji: '🍞' },
+  { key: 'chocolates',    label: 'Chocolates',    emoji: '🍫' },
+  { key: 'porks',         label: 'Grilled Meats', emoji: '🍖' },
+  { key: 'sausages',      label: 'Sausages',      emoji: '🌭' },
+];
+
+const CATS_UNIQUE = [];
+const _seenCats = new Set();
+for (const c of CATEGORIES) {
+  if (!_seenCats.has(c.key)) { _seenCats.add(c.key); CATS_UNIQUE.push(c); }
+}
+
+function calcCalories(price) { return Math.round(price * 18 + 80); }
+
+/* ── DISCOUNT ALGORITHM ── */
+const MIN_DISC = 0.05, MAX_DISC = 0.40;
+let _priceMin = Infinity, _priceMax = -Infinity;
+
+function computePriceRange(allDataMap) {
+  _priceMin = Infinity; _priceMax = -Infinity;
+  for (const key of Object.keys(allDataMap)) {
+    for (const item of allDataMap[key]) {
+      const p = parseFloat(item.price) || 0;
+      if (p < _priceMin) _priceMin = p;
+      if (p > _priceMax) _priceMax = p;
+    }
+  }
+  if (_priceMin === _priceMax) _priceMin = 0;
+}
+
+function getDiscount(price) {
+  const p = parseFloat(price) || 0;
+  const range = _priceMax - _priceMin || 1;
+  const norm = (p - _priceMin) / range;
+  return parseFloat((MIN_DISC + norm * (MAX_DISC - MIN_DISC)).toFixed(4));
+}
+
+/* ── TICKER ── */
+function buildTicker() {
+  const messages = [
+    "Today's Deal: 30% OFF on Bundle Meals",
+    "New Arrivals Added Weekly",
+    "Fresh Ingredients — Every Single Day",
+    "Mix & Match Any 3 Items — Save 25%",
+    "Try our restaurant and you’ll never regret it",
+    "Rate Our Food ★★★★★",
+    "Dine-In Experience at Its Finest",
+  ];
+  const track = document.getElementById('tickerTrack');
+  const full = [...messages, ...messages];
+  track.innerHTML = full.map(msg =>
+    `<span class="ticker-item"><span class="star">★</span>${msg}<span class="ticker-separator"></span></span>`
+  ).join('');
+}
+
+/* ── FETCH ── */
+async function fetchCategory(key) {
+  try {
+    const r = await fetch(`${BASE}/${key}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch (e) {
+    console.warn('Failed to fetch', key, e);
+    return [];
+  }
+}
+
+function deduplicateItems(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = (item.name || '').toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/* ── RENDER PHOTOS ── */
+function renderPhotos(items) {
+  const row = document.getElementById('photoRow');
+  items.filter(i => i.img).slice(0, 7).forEach(item => {
+    const img = document.createElement('img');
+    img.src = item.img; img.alt = item.name;
+    img.className = 'photo-circle'; img.loading = 'lazy';
+    img.onerror = () => img.remove();
+    row.appendChild(img);
+  });
+}
+
+/* ── RENDER DEALS ── */
+function renderDeals(allDataMap) {
+  const grid = document.getElementById('dealsGrid');
+  grid.innerHTML = '';
+
+  const allItems = [];
+  for (const key of Object.keys(allDataMap)) {
+    for (const item of allDataMap[key]) {
+      if (item.img) allItems.push(item);
+    }
+  }
+  if (allItems.length === 0) {
+    grid.innerHTML = '<div class="error-msg">No deals available right now.</div>';
+    return;
+  }
+
+  const sorted = allItems
+    .map(item => ({ item, disc: getDiscount(item.price) }))
+    .sort((a, b) => b.disc - a.disc);
+
+  const seenNames = new Set();
+  const unique = sorted.filter(({ item }) => {
+    const k = (item.name || '').toLowerCase().trim();
+    if (seenNames.has(k)) return false;
+    seenNames.add(k);
+    return true;
+  });
+
+  unique.slice(0, 12).forEach(({ item, disc }) => {
+    const original  = (item.price || 15).toFixed(2);
+    const dealPrice = ((item.price || 15) * (1 - disc)).toFixed(2);
+    const discPct   = Math.round(disc * 100);
+    const rating    = parseFloat(item.rate) || 4.2;
+    const stars     = '★'.repeat(Math.min(5, Math.round(rating)));
+
+    const card = document.createElement('div');
+    card.className = 'deal-card fade-in';
+    card.innerHTML = `
+      <div class="deal-badge">${discPct}% OFF</div>
+      <div class="deal-img-wrap">
+        <img src="${item.img}" alt="${item.name}" loading="lazy"
+             onerror="this.closest('.deal-card').remove()">
+      </div>
+      <div class="deal-body">
+        <div class="deal-name">${item.name}</div>
+        <div class="deal-desc">${item.dsc || 'A delicious dish made with the freshest ingredients.'}</div>
+        <div class="deal-footer">
+          <div class="price-wrap">
+            <span class="price-original">$${original}</span>
+            <span class="price-deal">$${dealPrice}</span>
+          </div>
+          <div class="deal-rating">${stars} ${rating.toFixed(1)}</div>
+        </div>
+        <div class="qty-controls" data-name="${item.name}" data-price="${dealPrice}">
+          <button class="qty-minus">−</button>
+          <span class="qty-val">0</span>
+          <button class="qty-plus">+</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  bindQtyControls(grid);
+  Object.keys(orderItems).forEach(name => syncQtyDisplay(name));
+}
+
+/* ── RENDER COMBOS ── */
+function renderCombos(allDataMap) {
+  const grid = document.getElementById('comboGrid');
+  grid.innerHTML = '';
+
+  const comboDefs = [
+    { tag: 'Family Bundle',  title: 'The Ultimate Family Combo',      cats: ['burgers','fried-chicken','drinks'],   count: [2,2,3], save: 35 },
+    { tag: 'Duo Deal',       title: "Couple's Special Combo",          cats: ['pizzas','drinks'],                   count: [1,2],   save: 25 },
+    { tag: 'Solo Saver',     title: 'Budget-Friendly Individual Meal', cats: ['sandwiches','drinks','desserts'],    count: [1,1,1], save: 20 },
+    { tag: 'BBQ Royal',      title: 'Premium BBQ Platter Combo',       cats: ['bbqs','best-foods','drinks'],        count: [1,1,2], save: 30 },
+    { tag: 'Steak Night',    title: 'Steak & Drinks Evening Special',  cats: ['steaks','drinks','desserts'],        count: [1,1,1], save: 28 },
+    { tag: 'Sweet Treat',    title: 'Dessert & Ice Cream Delight',     cats: ['desserts','ice-cream','chocolates'], count: [2,1,2], save: 22 },
+  ];
+
+  comboDefs.forEach((combo) => {
+    const card = document.createElement('div');
+    card.className = 'combo-card fade-in';
+
+    let totalOriginal = 0;
+    let itemLines = '';
+    let totalDealPrice = 0;
+
+    combo.cats.forEach((cat, ci) => {
+      const catData = allDataMap[cat] || [];
+      const item = catData.find(i => i.img) || catData[0];
+      if (item) {
+        const qty = combo.count[ci];
+        const unitPrice = parseFloat(item.price) || 15;
+        const disc = getDiscount(unitPrice);
+        const discUnit = unitPrice * (1 - disc);
+        totalOriginal  += unitPrice * qty;
+        totalDealPrice += discUnit * qty;
+        itemLines += `<li>${qty}x ${item.name}</li>`;
+      }
+    });
+
+    if (totalOriginal === 0) totalOriginal = 60;
+    const discountedPrice = (totalOriginal * (1 - combo.save / 100)).toFixed(2);
+    const savedAmount = (totalOriginal - parseFloat(discountedPrice)).toFixed(2);
+
+    card.innerHTML = `
+      <div class="combo-tag">${combo.tag} — Save ${combo.save}%</div>
+      <div class="combo-title">${combo.title}</div>
+      <ul class="combo-items-list">${itemLines || '<li>Carefully selected premium items</li>'}</ul>
+      <div class="combo-pricing">
+        <div class="combo-save">💰 You Save $${savedAmount}</div>
+        <div class="combo-price">$${discountedPrice}</div>
+      </div>
+      <div class="qty-controls" data-name="${combo.title}" data-price="${discountedPrice}">
+        <button class="qty-minus">−</button>
+        <span class="qty-val">0</span>
+        <button class="qty-plus">+</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  bindQtyControls(grid);
+  Object.keys(orderItems).forEach(name => syncQtyDisplay(name));
+}
+
+/* ── RENDER MENU SECTION ── */
+let allData = {};
+let activeCategory = 'best-foods';
+
+function discBadgeClass(disc) {
+  if (disc >= 0.28) return 'disc-badge high';
+  if (disc >= 0.17) return 'disc-badge mid';
+  return 'disc-badge low';
+}
+
+function renderMenuSection(key, data) {
+  const cat = CATS_UNIQUE.find(c => c.key === key);
+  const label = cat ? `${cat.emoji} ${cat.label}` : key;
+  const filtered = deduplicateItems(data.filter(i => i.img));
+  if (filtered.length === 0) return null;
+
+  const section = document.createElement('div');
+  section.className = 'menu-section';
+  if (['best-foods','bbqs','steaks'].includes(key)) section.classList.add('full-width');
+
+  const rows = filtered.map(item => {
+    const origPrice  = parseFloat(item.price) || 15;
+    const disc       = getDiscount(origPrice);
+    const discPct    = Math.round(disc * 100);
+    const finalPrice = (origPrice * (1 - disc)).toFixed(2);
+    const saved      = (origPrice - parseFloat(finalPrice)).toFixed(2);
+    const bClass     = discBadgeClass(disc);
+
+    return `
+      <tr>
+        <td>
+          <div class="item-name-cell">
+            <div class="item-dot"></div>
+            <div>
+              ${item.name}
+              ${item.country ? `<span class="item-country">${item.country}</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>${calcCalories(origPrice)} kcal</td>
+        <td style="text-align:center"><span class="${bClass}">${discPct}% OFF</span></td>
+        <td>
+          <div class="price-col">
+            <span class="price-orig-small">$${origPrice.toFixed(2)}</span>
+            <span class="price-final">$${finalPrice}</span>
+            <span class="saved-label">Save $${saved}</span>
+          </div>
+        </td>
+        <td>
+          <div class="qty-controls" data-name="${item.name}" data-price="${finalPrice}">
+            <button class="qty-minus">−</button>
+            <span class="qty-val">0</span>
+            <button class="qty-plus">+</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  section.innerHTML = `
+    <div class="menu-section-header">${label}</div>
+    <table class="menu-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Calories</th>
+          <th class="th-disc">Discount</th>
+          <th>Price</th>
+          <th style="text-align:right">Qty</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  return section;
+}
+
+function renderMenuMain() {
+  const main = document.getElementById('menuMain');
+  main.innerHTML = '';
+  const order = [activeCategory, ...CATS_UNIQUE.filter(c => c.key !== activeCategory).map(c => c.key)];
+  let rendered = 0;
+  order.forEach(key => {
+    const data = allData[key];
+    if (data && data.length > 0) {
+      const sec = renderMenuSection(key, data);
+      if (sec) {
+        bindQtyControls(sec);
+        main.appendChild(sec);
+        rendered++;
+      }
+    }
+  });
+  if (rendered === 0) {
+    main.innerHTML = '<div class="error-msg" style="grid-column:1/-1">No items found for this category.</div>';
+  }
+  Object.keys(orderItems).forEach(name => syncQtyDisplay(name));
+}
+
+function renderCatTabs() {
+  const tabs = document.getElementById('catTabs');
+  tabs.innerHTML = '';
+  CATS_UNIQUE.forEach(cat => {
+    const hasItems = (allData[cat.key] || []).some(i => i.img);
+    if (!hasItems) return;
+    const btn = document.createElement('button');
+    btn.className = 'cat-tab' + (cat.key === activeCategory ? ' active' : '');
+    btn.textContent = `${cat.emoji} ${cat.label}`;
+    btn.addEventListener('click', () => {
+      activeCategory = cat.key;
+      document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMenuMain();
+      document.getElementById('menuMain').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+/* ── INIT ── */
+async function init() {
+  buildTicker();
+  try {
+    const results = await Promise.all(CATS_UNIQUE.map(c => fetchCategory(c.key)));
+    CATS_UNIQUE.forEach((c, i) => {
+      allData[c.key] = deduplicateItems(results[i] || []);
+    });
+
+    computePriceRange(allData);
+
+    const photoItems = (allData['best-foods'] || []).filter(i => i.img);
+    renderPhotos(photoItems);
+
+    renderDeals(allData);
+    renderCombos(allData);
+    renderCatTabs();
+    renderMenuMain();
+    updateConfirmBar();
+
+  } catch (err) {
+    document.getElementById('dealsGrid').innerHTML =
+      `<div class="error-msg">Failed to load data. Please check your internet connection.</div>`;
+    console.error(err);
+  }
+
+  setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hidden');
+  }, 700);
+}
+
+init();
+</script>
+</body>
+</html>

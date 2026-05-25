@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang='en'>
+
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title>King Food Support</title>
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css' rel='stylesheet'>
+  <link rel='stylesheet' href='/site.css'>
+  <script src='/i18n.js'></script>
+  <style>
+    :root {
+      --chat-bg: #efeae2;
+      --chat-user: #dcf8c6;
+      --chat-support: #fff;
+      --chat-text: #111;
+      --chat-time: #667781;
+      --chat-header: #075e54;
+      --chat-input: #f0f2f5
+    }
+
+    body.dark-mode {
+      --chat-bg: #0b141a;
+      --chat-user: #005c4b;
+      --chat-support: #202c33;
+      --chat-text: #e9edef;
+      --chat-time: #8696a0;
+      --chat-header: #202c33;
+      --chat-input: #1f2c33
+    }
+
+    .support-layout {
+      display: flex;
+      height: calc(100vh - 76px);
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow: hidden;
+      gap: 20px;
+      padding: 10px 0;
+    }
+
+    .faq-sidebar {
+      width: 320px;
+      min-width: 320px;
+      background: var(--panel-bg, #fff);
+      border: 1px solid var(--border-color, #e0e0e0);
+      border-radius: 16px;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column
+    }
+
+    .faq-sidebar h5 {
+      font-size: .95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .faq-item {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: all .3s
+    }
+
+    .faq-item .faq-q {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .85rem;
+      font-weight: 600;
+      background: var(--panel-bg);
+      transition: background .2s
+    }
+
+    .faq-item .faq-q:hover {
+      background: var(--btn-secondary-bg)
+    }
+
+    .faq-item .faq-q i {
+      transition: transform .3s;
+      font-size: .8rem;
+      color: var(--text-secondary)
+    }
+
+    .faq-item.open .faq-q i {
+      transform: rotate(180deg)
+    }
+
+    .faq-item .faq-a {
+      padding: 0 16px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s ease;
+      font-size: .82rem;
+      color: var(--text-secondary);
+      line-height: 1.6
+    }
+
+    .faq-item.open .faq-a {
+      max-height: 300px;
+      padding: 0 16px 14px
+    }
+
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--chat-bg);
+      position: relative;
+      border: 1px solid var(--border-color, #e0e0e0);
+      border-radius: 16px;
+      overflow: hidden
+    }
+
+    .chat-header {
+      background: var(--chat-header);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+      z-index: 2
+    }
+
+    .chat-header .chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0
+    }
+
+    .chat-header .chat-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .chat-header .chat-info .name {
+      font-weight: 600;
+      font-size: .95rem
+    }
+
+    .chat-header .chat-info .status {
+      font-size: .75rem;
+      opacity: .8
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.03"><circle cx="10" cy="10" r="2" fill="gray"/><circle cx="30" cy="20" r="1.5" fill="gray"/><circle cx="60" cy="15" r="2.5" fill="gray"/><circle cx="85" cy="30" r="1.5" fill="gray"/><circle cx="20" cy="45" r="2" fill="gray"/><circle cx="50" cy="50" r="1.5" fill="gray"/><circle cx="80" cy="60" r="2" fill="gray"/><circle cx="15" cy="75" r="1.5" fill="gray"/><circle cx="70" cy="80" r="2" fill="gray"/><circle cx="40" cy="85" r="1.5" fill="gray"/></svg>');
+      background-size: 100px
+    }
+
+    .chat-messages .msg {
+      padding: 8px 12px 10px;
+      border-radius: 8px;
+      max-width: 75%;
+      min-width: 230px;
+      margin-bottom: 15px;
+      word-wrap: break-word;
+      position: relative;
+      font-size: .9rem;
+      line-height: 1.4;
+      animation: msgIn .2s ease
+    }
+
+    @keyframes msgIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .chat-messages .msg.user {
+      background: var(--chat-user);
+      color: var(--chat-text);
+      align-self: flex-end;
+      border-bottom-right-radius: 2px
+    }
+
+    .chat-messages .msg.support {
+      background: var(--chat-support);
+      color: var(--chat-text);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, .05)
+    }
+
+    .chat-messages .msg .msg-time {
+      font-size: .65rem;
+      color: var(--chat-time);
+      text-align: right;
+      margin-top: 4px
+    }
+
+    .chat-messages .msg .msg-file {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, .05);
+      border-radius: 8px;
+      margin-top: 4px;
+      font-size: .82rem
+    }
+
+    .chat-messages .msg .msg-file a {
+      color: var(--accent);
+      text-decoration: none
+    }
+
+    .chat-messages .msg .msg-file i {
+      font-size: 1.2rem
+    }
+
+    .chat-messages .msg .msg-reply {
+      border-left: 3px solid var(--accent);
+      padding: 4px 8px;
+      margin-bottom: 6px;
+      font-size: .78rem;
+      background: rgba(0, 0, 0, .03);
+      border-radius: 4px;
+      color: var(--text-secondary)
+    }
+
+    .chat-messages .msg .msg-actions {
+      display: none;
+      position: absolute;
+      top: -14px;
+      right: 4px;
+      gap: 4px;
+      background: var(--panel-bg, #fff);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2px 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      z-index: 3
+    }
+
+    .chat-messages .msg:hover .msg-actions {
+      display: flex
+    }
+
+    .chat-messages .msg .msg-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .85rem;
+      padding: 4px 5px;
+      border-radius: 50%;
+      transition: background .2s;
+      color: var(--text-secondary)
+    }
+
+    .chat-messages .msg .msg-actions button:hover {
+      background: var(--btn-secondary-bg)
+    }
+
+    .chat-messages .msg .msg-reactions {
+      display: flex;
+      gap: 3px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      position: absolute;
+      bottom: -10px;
+      right: 8px;
+      z-index: 2
+    }
+
+    .chat-messages .msg .msg-reactions .reaction-badge {
+      background: var(--panel-bg, #fff);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1px 6px;
+      font-size: .7rem;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+      cursor: pointer
+    }
+
+    .chat-messages .msg .msg-reactions .reaction-badge.active {
+      background: rgba(255, 107, 53, .15);
+      border-color: var(--accent)
+    }
+
+    .chat-input-area {
+      background: var(--chat-input);
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-top: 1px solid var(--border-color)
+    }
+
+    .chat-input-area input[type="text"] {
+      flex: 1;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 16px;
+      background: var(--panel-bg);
+      color: var(--text-color);
+      outline: none;
+      font-size: .9rem
+    }
+
+    .chat-input-area .chat-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .2s;
+      font-size: 1.2rem;
+      background: transparent;
+      color: var(--text-secondary);
+      flex-shrink: 0
+    }
+
+    .chat-input-area .chat-btn:hover {
+      background: var(--btn-secondary-bg);
+      color: var(--accent)
+    }
+
+    .chat-input-area .chat-btn.send {
+      background: var(--accent);
+      color: #fff
+    }
+
+    .chat-input-area .chat-btn.send:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 2px 8px rgba(255, 107, 53, .4)
+    }
+
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      gap: 12px
+    }
+
+    .chat-empty i {
+      font-size: 4rem;
+      opacity: .4
+    }
+
+    .chat-empty h6 {
+      font-weight: 600
+    }
+
+    @media(max-width:768px) {
+      .faq-sidebar {
+        display: none
+      }
+
+      .support-layout {
+        height: calc(100vh - 60px);
+        gap: 0;
+        padding: 0;
+      }
+
+      .chat-main {
+        border-radius: 0;
+        border: none;
+      }
+
+      .chat-messages .msg {
+        max-width: 90%
+      }
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 5px
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, .15);
+      border-radius: 10px
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, .25)
+    }
+  </style>
+</head>
+
+<body>
+  <nav class='navbar navbar-expand-lg nav-theme sticky-top'>
+    <div class='container-fluid'>
+      <a class='navbar-brand fw-bold' href='/home.html'>King Food</a>
+      <button class='navbar-toggler' data-bs-toggle='collapse' data-bs-target='#navMain'><span
+          class='navbar-toggler-icon'></span></button>
+      <div class='collapse navbar-collapse' id='navMain'>
+        <ul class='navbar-nav me-auto'>
+          <li class='nav-item'><a class='nav-link' href='/home.html'>Home</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="support-layout">
+    <div class="faq-sidebar">
+      <h5><i class="bi bi-question-circle text-warning"></i> <span data-i18n="faq_title">Frequently Asked Questions</span></h5>
+      <div class="faq-item open">
+        <div class="faq-q"><span>📦 How do I track my order?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">Go to <a href='/orders.html' style="color:var(--accent)">My Orders</a> page to see real-time status of all your orders.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span>💳 What payment methods do you accept?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">We accept Visa, Mastercard, and cash on delivery. Save your cards securely in your profile.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span>🚚 How long does delivery take?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">Delivery usually takes 30-45 minutes depending on your location and order volume.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span>🔄 Can I cancel or modify my order?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">You can cancel within 5 minutes of placing. Contact support for modifications.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span>🎟️ How do I use a promo code?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">Enter your code in the cart page before checkout. Each code can be used once per account.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span>🪑 How do I book a table?</span><i class="bi bi-chevron-down"></i></div>
+        <div class="faq-a">Visit the <a href='/contact.html' style="color:var(--accent)">Book Table</a> page, select date/time and number of guests.</div>
+      </div>
+      <hr style="margin:16px 0;border-color:var(--border-color)">
+      <div style="font-size:.82rem;color:var(--text-secondary)">
+        <p><i class="bi bi-telephone"></i> <a href="tel:+201016447253" style="color:var(--accent)">+20 101 644 7253</a></p>
+        <p><i class="bi bi-envelope"></i> <a href="mailto:ayhwanna@gmail.com" style="color:var(--accent)">ayhwanna@gmail.com</a></p>
+      </div>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <div class="chat-avatar"><i class="bi bi-headset"></i></div>
+        <div class="chat-info">
+          <div class="name"><span data-i18n="support_title">King Food Support</span></div>
+          <div class="status"><span id="supportStatus">Online</span></div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty" id="chatEmpty">
+          <i class="bi bi-chat-dots"></i>
+          <h6 data-i18n="support_start">Start a conversation</h6>
+          <p style="font-size:.85rem" data-i18n="support_start_desc">Send a message or ask a question below</p>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <button class="chat-btn" id="chatEmojiBtn" title="Add reaction" style="display:none">😊</button>
+        <button class="chat-btn" id="chatAttachBtn" title="Attach file"><i class="bi bi-paperclip"></i></button>
+        <input id="chatMsg" type="text" placeholder="Type a message..." data-i18n-placeholder="support_input_placeholder">
+        <button class="chat-btn send" id="chatSendBtn"><i class="bi bi-send-fill"></i></button>
+        <input id="chatFileInput" type="file" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/site.js"></script>
+  <script>
+    let supportSocket = null;
+    let currentUserEmail = '';
+    let replyToMsg = null;
+    let currentUserId = null;
+
+    // دالة مخصصة لجلب البيانات تتخطى مشاكل الـ API العامة وتدعم الكوكيز
+    async function safeFetch(url, options = {}) {
+        options.credentials = 'include';
+        options.headers = options.headers || {};
+        options.headers['Accept'] = 'application/json';
+        if(options.body) {
+            options.headers['Content-Type'] = 'application/json';
+        }
+        
+        try {
+            const res = await fetch(url, options);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return await res.json();
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            throw error; // رمي الخطأ ليتم التقاطه في الـ catch الخارجية
+        }
+    }
+
+    async function initSupport() {
+      const chatBox = document.getElementById('chatMessages');
+      const chatMsg = document.getElementById('chatMsg');
+      const sendBtn = document.getElementById('chatSendBtn');
+      const attachBtn = document.getElementById('chatAttachBtn');
+      const fileInput = document.getElementById('chatFileInput');
+
+      chatMsg.disabled = true;
+      sendBtn.disabled = true;
+      if(attachBtn) attachBtn.disabled = true;
+      chatMsg.placeholder = "Verifying session...";
+
+      // 1. استخدام safeFetch لضمان إرسال الجلسة مع الطلب
+      try {
+        const profile = await safeFetch('/api/user/profile');
+        if (profile && profile._id) {
+          currentUserId = profile._id;
+          currentUserEmail = profile.email || '';
+          
+          chatMsg.disabled = false;
+          sendBtn.disabled = false;
+          if(attachBtn) attachBtn.disabled = false;
+          chatMsg.placeholder = "Type a message...";
+        } else {
+          chatMsg.placeholder = "Please login to chat.";
+          return;
+        }
+      } catch (e) {
+        // إذا فشل البروفايل، نفتح الشات مبدئياً لكي لا يتجمد الواجهة ولكن بـ User ID مجهول
+        // سيعتمد السيرفر على الـ Session المخزنة لديه لاستخراج الـ ID
+        console.warn("Could not verify ID from profile, relying on Server Session.", e);
+        chatMsg.disabled = false;
+        sendBtn.disabled = false;
+        if(attachBtn) attachBtn.disabled = false;
+        chatMsg.placeholder = "Type a message...";
+      }
+
+      // 2. إعداد الـ Socket
+      try {
+        if (typeof io !== 'undefined') {
+          supportSocket = io();
+          if (currentUserId) supportSocket.emit('join-user-room', currentUserId);
+          
+          supportSocket.on('connect', () => {
+            if (currentUserId) supportSocket.emit('join-user-room', currentUserId);
+          });
+          
+          supportSocket.on('support:new-message', (msg) => {
+            const emptyEl = document.getElementById('chatEmpty');
+            if (emptyEl) emptyEl.style.display = 'none';
+            
+            if (msg._id) {
+              const existingTemp = chatBox.querySelector(`[data-msg-id^="temp-"]`);
+              if (existingTemp && existingTemp.textContent.includes(msg.message || '')) {
+                existingTemp.remove();
+              }
+            }
+            appendMessage(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          });
+          
+          supportSocket.on('support:error', (err) => {
+             console.error("Socket Error:", err);
+          });
+        }
+      } catch (e) { console.error("Socket Init Error:", e); }
+
+      // 3. جلب المحادثات السابقة عبر safeFetch
+      try {
+        const convs = await safeFetch('/api/user/conversations');
+        const emptyEl = document.getElementById('chatEmpty');
+        if (convs && convs.length > 0 && emptyEl) emptyEl.style.display = 'none';
+        
+        if(Array.isArray(convs)){
+             convs.forEach(m => appendMessage(m));
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (e) { console.error("Failed to load history", e); }
+
+      // 4. دالة الإرسال المؤمّنة باستخدام safeFetch
+      async function sendMessage() {
+        const text = chatMsg.value.trim();
+        if (!text && !replyToMsg) return;
+        
+        // إزالة الفحص الصارم للـ currentUserId من ناحية المتصفح، لندع السيرفر يقرر بناء على الجلسة
+        const msgData = { message: text, replyTo: replyToMsg?._id || null };
+        if(currentUserId) msgData.userId = currentUserId;
+        
+        const tempId = 'temp-' + Date.now();
+        
+        const tempMsg = {
+          _id: tempId,
+          senderRole: 'user',
+          message: text,
+          replyTo: replyToMsg,
+          createdAt: new Date().toISOString()
+        };
+        const emptyEl = document.getElementById('chatEmpty');
+        if (emptyEl) emptyEl.style.display = 'none';
+        appendMessage(tempMsg);
+        
+        chatMsg.value = '';
+        replyToMsg = null;
+        updateReplyIndicator();
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        try {
+          const savedMsg = await safeFetch('/api/user/conversations', { 
+              method: 'POST', 
+              body: JSON.stringify(msgData) 
+          });
+          
+          const tempEl = chatBox.querySelector(`[data-msg-id="${tempId}"]`);
+          if (tempEl) tempEl.remove();
+          appendMessage(savedMsg);
+
+          if (supportSocket && supportSocket.connected) {
+            supportSocket.emit('support:user-message', savedMsg);
+          }
+        } catch (e) { 
+          const tempEl = chatBox.querySelector(`[data-msg-id="${tempId}"]`);
+          if (tempEl) tempEl.style.opacity = '0.5';
+          if(typeof toast !== 'undefined') toast('Session expired or network error. Refresh to login.', false);
+        }
+      }
+
+      sendBtn.onclick = sendMessage;
+      chatMsg.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+      // 5. رفع الملفات
+      if(attachBtn) {
+          attachBtn.onclick = () => fileInput.click();
+          fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+              const res = await fetch('/api/upload', { method: 'POST', body: formData, credentials: 'include' });
+              if(!res.ok) throw new Error("Upload Error");
+              const data = await res.json();
+              
+              const tempId = 'temp-' + Date.now();
+              const tempMsg = {
+                _id: tempId,
+                senderRole: 'user',
+                message: '',
+                fileUrl: data.fileUrl,
+                fileName: data.fileName,
+                fileType: data.fileType,
+                replyTo: replyToMsg,
+                createdAt: new Date().toISOString()
+              };
+              const emptyEl = document.getElementById('chatEmpty');
+              if (emptyEl) emptyEl.style.display = 'none';
+              appendMessage(tempMsg);
+              
+              replyToMsg = null;
+              updateReplyIndicator();
+              chatBox.scrollTop = chatBox.scrollHeight;
+              
+              const payload = { message: '', fileUrl: data.fileUrl, fileName: data.fileName, fileType: data.fileType, replyTo: tempMsg.replyTo?._id || null };
+              if(currentUserId) payload.userId = currentUserId;
+
+              const savedMsg = await safeFetch('/api/user/conversations', { method: 'POST', body: JSON.stringify(payload) });
+              
+              const tempEl = chatBox.querySelector(`[data-msg-id="${tempId}"]`);
+              if (tempEl) tempEl.remove();
+              appendMessage(savedMsg);
+
+              if (supportSocket && supportSocket.connected) {
+                supportSocket.emit('support:user-message', savedMsg);
+              }
+            } catch (e) { if(typeof toast !== 'undefined') toast('Upload failed', false); }
+            fileInput.value = '';
+          };
+      }
+    }
+
+    function appendMessage(m) {
+      const chatBox = document.getElementById('chatMessages');
+      const existing = chatBox.querySelector(`[data-msg-id="${m._id}"]`);
+      if (existing) {
+        const reactEl = existing.querySelector('.msg-reactions');
+        if (m.reactions?.length) {
+          const counts = m.reactions.reduce((acc, r) => { acc[r.type] = (acc[r.type] || 0) + 1; return acc; }, {});
+          const html = Object.entries(counts).map(([emoji, count]) => {
+            const active = m.reactions.some(r => r.type === emoji && String(r.by) === String(currentUserId));
+            return `<span class="reaction-badge${active ? ' active' : ''}" onclick="reactToMsg('${m._id}','${emoji}')">${emoji}${count > 1 ? ' ' + count : ''}</span>`;
+          }).join('');
+          if (reactEl) {
+            reactEl.innerHTML = html;
+          } else if (counts) {
+            const newReactEl = document.createElement('div');
+            newReactEl.className = 'msg-reactions';
+            newReactEl.innerHTML = html;
+            existing.appendChild(newReactEl);
+          }
+        } else if (reactEl) {
+          reactEl.remove();
+        }
+        return;
+      }
+      const div = document.createElement('div');
+      div.className = `msg ${m.senderRole === 'user' ? 'user' : 'support'}`;
+      div.dataset.msgId = m._id;
+
+      let html = '';
+      if (m.replyTo) {
+        const replyText = typeof m.replyTo === 'object' ? m.replyTo.message : '';
+        if (replyText) html += `<div class="msg-reply"><i class="bi bi-reply-fill"></i> ${replyText}</div>`;
+      }
+      if (m.fileUrl) {
+        const isImage = m.fileType?.startsWith('image/');
+        if (isImage) {
+          html += `<div class="msg-file"><i class="bi bi-image"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName}</a></div>`;
+          html += `<img src="${m.fileUrl}" style="max-width:200px;border-radius:8px;margin-top:4px;cursor:pointer" onclick="window.open(this.src)">`;
+        } else {
+          html += `<div class="msg-file"><i class="bi bi-paperclip"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName}</a></div>`;
+        }
+      }
+      if (m.message) html += m.message;
+      const time = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      html += `<div class="msg-time">${time}</div>`;
+      if (m.reactions?.length) {
+        const counts = m.reactions.reduce((acc, r) => { acc[r.type] = (acc[r.type] || 0) + 1; return acc; }, {});
+        html += `<div class="msg-reactions">${Object.entries(counts).map(([emoji, count]) => {
+          const active = m.reactions.some(r => r.type === emoji && String(r.by) === String(currentUserId));
+          return `<span class="reaction-badge${active ? ' active' : ''}" onclick="reactToMsg('${m._id}','${emoji}')">${emoji}${count > 1 ? ' ' + count : ''}</span>`;
+        }).join('')}</div>`;
+      }
+      html += `<div class="msg-actions">
+      <button onclick="reactToMsg('${m._id}','👍')" title="Like">👍</button>
+      <button onclick="reactToMsg('${m._id}','❤️')" title="Love">❤️</button>
+      <button onclick="reactToMsg('${m._id}','🔥')" title="Fire">🔥</button>
+      <button onclick="reactToMsg('${m._id}','😄')" title="Happy">😄</button>
+      <button onclick="reactToMsg('${m._id}','😡')" title="Bad">😡</button>
+      <button onclick="copyMsg(this)" title="Copy"><i class="bi bi-clipboard"></i></button>
+      <button onclick="replyTo('${m._id}','${(m.message || '').replace(/'/g, "\\'")}')" title="Reply"><i class="bi bi-reply"></i></button>
+    </div>`;
+
+      div.innerHTML = html;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function copyMsg(btn) {
+      const msgDiv = btn.closest('.msg');
+      const text = msgDiv.childNodes[0]?.textContent?.trim() || '';
+      if (text) { navigator.clipboard.writeText(text); if(typeof toast !== 'undefined') toast('Copied!', true); }
+    }
+
+    function replyTo(id, text) {
+      replyToMsg = { _id: id, message: text };
+      updateReplyIndicator();
+      document.getElementById('chatMsg').focus();
+    }
+
+    function updateReplyIndicator() {
+      let el = document.getElementById('replyIndicator');
+      if (replyToMsg) {
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'replyIndicator';
+          el.style.cssText = 'padding:6px 16px;font-size:.8rem;background:var(--chat-header);color:#fff;display:flex;align-items:center;gap:8px';
+          document.querySelector('.chat-input-area').before(el);
+        }
+        el.innerHTML = `<i class="bi bi-reply-fill"></i> <span style="flex:1">${replyToMsg.message.substring(0, 50)}</span> <button onclick="cancelReply()" style="background:none;border:none;color:#fff;cursor:pointer">&times;</button>`;
+      } else {
+        if (el) el.remove();
+      }
+    }
+
+    function cancelReply() { replyToMsg = null; updateReplyIndicator(); }
+
+    function reactToMsg(messageId, emoji) {
+      if (supportSocket && currentUserId) {
+        supportSocket.emit('support:reaction', { messageId, emoji, userId: currentUserId });
+      } else {
+        safeFetch('/api/user/conversations/reaction', { method: 'POST', body: JSON.stringify({ messageId, emoji }) }).catch(() => { });
+      }
+    }
+
+    document.querySelectorAll('.faq-q').forEach(el => {
+      el.addEventListener('click', () => {
+        const item = el.parentElement;
+        item.classList.toggle('open');
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', initSupport);
+  </script>
+</body>
+
+</html>
