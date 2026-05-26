@@ -249,6 +249,16 @@ const chatSessionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+const chatAssetSchema = new mongoose.Schema(
+  {
+    originalName: String,
+    mimeType: String,
+    size: Number,
+    data: Buffer,
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  },
+  { timestamps: true }
+);
 
 // Paymob Transaction Schema
 const transactionSchema = new mongoose.Schema(
@@ -308,6 +318,7 @@ const Conversation     = mongoose.model('Conversation', conversationSchema);
 const Newsletter       = mongoose.model('Newsletter', newsletterSchema);
 const CouponUse        = mongoose.model('CouponUse', couponUseSchema);
 const ChatSession      = mongoose.model('ChatSession', chatSessionSchema);
+const ChatAsset        = mongoose.model('ChatAsset', chatAssetSchema);
 const UserTourState    = mongoose.model('UserTourState', userTourStateSchema);
 const NotificationRead = mongoose.model('NotificationRead', notificationReadSchema);
 const Transaction      = mongoose.model('Transaction', transactionSchema);
@@ -1097,8 +1108,30 @@ const upload = multer({
 app.post('/api/upload', authOnly, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
   const mime = req.file.mimetype || 'application/octet-stream';
-  const fileUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
-  res.json({ fileUrl, fileName: req.file.originalname, fileType: mime });
+  ChatAsset.create({
+    originalName: req.file.originalname,
+    mimeType: mime,
+    size: req.file.size || 0,
+    data: req.file.buffer,
+    uploadedBy: req.session.userId
+  }).then((asset) => {
+    res.json({ fileUrl: `/api/files/${asset._id}`, fileName: asset.originalName, fileType: asset.mimeType });
+  }).catch((e) => {
+    res.status(500).json({ message: e.message || 'Upload save failed' });
+  });
+});
+
+app.get('/api/files/:id', authOnly, async (req, res) => {
+  try {
+    const asset = await ChatAsset.findById(req.params.id).lean();
+    if (!asset?.data) return res.status(404).send('File not found');
+    res.setHeader('Content-Type', asset.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${(asset.originalName || 'file').replace(/"/g, '')}"`);
+    res.setHeader('Cache-Control', 'private, max-age=31536000');
+    res.send(asset.data);
+  } catch (e) {
+    res.status(404).send('File not found');
+  }
 });
 
 // =====================================================================
