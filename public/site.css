@@ -1140,3 +1140,66 @@ body.dark-mode .chef-vic .fa-hand-peace,
 body.dark-mode .chef-vic .fa-trophy {
     color: #121212 !important;
 }
+/* ================= MOBILE FIXES (home/menu/cart) ================= */
+@media (max-width: 575.98px) {
+  .main_slide4 {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-inline: 14px;
+  }
+
+  .main_slide4 .chef-feed p {
+    margin-inline: 10px 0 !important;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  .main_slide4 .chef {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .main_slide4 .chef img {
+    max-width: 84%;
+    height: auto;
+  }
+
+  #cartList .card {
+    flex-wrap: wrap;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+  }
+
+  #cartList .card .d-flex.gap-2.align-items-center {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  #cartList .card .btn-danger {
+    margin-left: 0 !important;
+  }
+
+  .menu-table td .qty-controls {
+    min-width: 96px;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .menu-table td .qty-controls button {
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar .navbar-toggler {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}

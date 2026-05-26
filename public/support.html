@@ -381,11 +381,17 @@
 
     @media(max-width:768px) {
       .faq-sidebar {
-        display: none
+        display: block;
+        width: 100%;
+        max-height: 34vh;
+        overflow-y: auto;
+        margin-bottom: 10px;
       }
 
       .support-layout {
-        height: calc(100vh - 60px);
+        height: auto;
+        min-height: calc(100vh - 60px);
+        flex-direction: column;
         gap: 0;
         padding: 0;
       }
@@ -487,7 +493,7 @@
         <button class="chat-btn" id="chatAttachBtn" title="Attach file"><i class="bi bi-paperclip"></i></button>
         <input id="chatMsg" type="text" placeholder="Type a message..." data-i18n-placeholder="support_input_placeholder">
         <button class="chat-btn send" id="chatSendBtn"><i class="bi bi-send-fill"></i></button>
-        <input id="chatFileInput" type="file" style="display:none">
+        <input id="chatFileInput" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar,.xlsx,.ppt,.pptx" style="display:none">
       </div>
     </div>
   </div>
@@ -734,9 +740,17 @@
       }
       if (m.fileUrl) {
         const isImage = m.fileType?.startsWith('image/');
+        const isVideo = m.fileType?.startsWith('video/');
+        const isAudio = m.fileType?.startsWith('audio/');
         if (isImage) {
           html += `<div class="msg-file"><i class="bi bi-image"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName}</a></div>`;
           html += `<img src="${m.fileUrl}" style="max-width:200px;border-radius:8px;margin-top:4px;cursor:pointer" onclick="window.open(this.src)">`;
+        } else if (isVideo) {
+          html += `<div class="msg-file"><i class="bi bi-camera-video"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'Video'}</a></div>`;
+          html += `<video controls preload="metadata" style="max-width:220px;border-radius:8px;margin-top:4px"><source src="${m.fileUrl}" type="${m.fileType || 'video/mp4'}"></video>`;
+        } else if (isAudio) {
+          html += `<div class="msg-file"><i class="bi bi-mic"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'Audio'}</a></div>`;
+          html += `<audio controls preload="metadata" style="width:220px;margin-top:4px"><source src="${m.fileUrl}" type="${m.fileType || 'audio/mpeg'}"></audio>`;
         } else {
           html += `<div class="msg-file"><i class="bi bi-paperclip"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName}</a></div>`;
         }
@@ -796,11 +810,7 @@
     function cancelReply() { replyToMsg = null; updateReplyIndicator(); }
 
     function reactToMsg(messageId, emoji) {
-      if (supportSocket && currentUserId) {
-        supportSocket.emit('support:reaction', { messageId, emoji, userId: currentUserId });
-      } else {
-        safeFetch('/api/user/conversations/reaction', { method: 'POST', body: JSON.stringify({ messageId, emoji }) }).catch(() => { });
-      }
+      safeFetch('/api/user/conversations/reaction', { method: 'POST', body: JSON.stringify({ messageId, emoji }) }).catch(() => { });
     }
 
     document.querySelectorAll('.faq-q').forEach(el => {
