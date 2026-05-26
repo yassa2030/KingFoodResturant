@@ -270,11 +270,31 @@
     font-size: 12px;
   }
 
-  .qty-controls .qty-val {
-    min-width: 30px;
-    text-align: center;
-    font-size: 12px;
-  }
+.qty-controls .qty-val {
+  min-width: 30px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Alternate class name used in some templates */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quantity-control button {
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px;
+  font-size: 18px !important;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
 
   /* Deal cards - full content visible */
   .deal-card {
@@ -395,6 +415,11 @@
   .cat-tab {
     white-space: nowrap;
     flex-shrink: 0;
+  }
+
+  .quantity-control {
+    width: 100%;
+    justify-content: space-around;
   }
 }
 

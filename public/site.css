@@ -1026,13 +1026,22 @@ body.dark-mode .overlay {
 
 /* ==================== FLOATING CHAT BUBBLE ==================== */
 .chat-bubble {
-  position: fixed; bottom: 24px; right: 24px; z-index: 9998;
+  position: fixed; bottom: 165px; right: 24px; z-index: 9998;
   width: 60px; height: 60px; border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), #f59e0b);
   color: white; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 28px; box-shadow: 0 6px 24px rgba(255, 107, 53, 0.4);
   transition: all 0.3s ease; animation: bubblePulse 2s infinite;
+}
+@media (max-width: 768px) {
+  .chat-bubble {
+    right: 20px;
+    bottom: 150px;
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
 }
 .chat-bubble:hover {
   transform: scale(1.12); box-shadow: 0 8px 32px rgba(255, 107, 53, 0.6);
