@@ -239,14 +239,14 @@
   /* qty controls (preserved logic) */
   .qty-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
   .qty-controls button {
-    width: 30px; height: 30px; border-radius: 50%;
+    width: 40px; height: 40px; min-width: 40px; min-height: 40px; border-radius: 50%;
     border: 1px solid var(--gold); background: transparent;
     color: var(--gold); font-size: 1rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all .2s;
   }
   .qty-controls button:hover { background: var(--gold); color: #1a1410; }
-  .qty-controls .qty-val { font-weight: 700; min-width: 20px; text-align: center; color: var(--text-white); }
+  .qty-controls .qty-val { font-weight: 700; min-width: 26px; text-align: center; color: var(--text-white); font-size: 1rem; }
 
   /* ── COMBOS ── */
   .combo-section { max-width: 1100px; margin: 0 auto; padding: 0 16px 20px; }
@@ -404,6 +404,18 @@
   @media (max-width: 500px) {
     .main-title { font-size: 2.2rem; letter-spacing: 4px; }
     .deals-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 575.98px) {
+    .navbar .navbar-toggler { display: inline-flex !important; border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.08); }
+    .navbar .navbar-toggler-icon { filter: invert(1) brightness(1.6); }
+    .navbar .navbar-collapse { background: rgba(12,10,8,0.96); padding: 10px 12px; border-radius: 10px; margin-top: 8px; }
+    .navbar .nav-link { display: inline-block; padding: 8px 0; font-size: 1rem; }
+    .menu-table { table-layout: fixed; }
+    .menu-table td { padding: 8px 6px; font-size: 0.82rem; }
+    .menu-table td:last-child { overflow: visible; }
+    .menu-table .qty-controls { display: inline-flex !important; min-width: 120px; margin-top: 0; gap: 8px; flex-wrap: nowrap; justify-content: center; }
+    .menu-table .qty-controls button { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 1.2rem; }
   }
 </style>
 </head>

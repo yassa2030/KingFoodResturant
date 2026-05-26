@@ -92,6 +92,19 @@
       #paymentToast .toast-title { font-size: 16px; margin-bottom: 3px; }
       #paymentToast .toast-msg   { font-size: 13px; font-weight: 400; opacity: 0.92; }
     </style>
+    <style>
+      @media (max-width: 991.98px){
+        .navbar .navbar-toggler{ display:none !important; }
+      }
+      @media (max-width: 575.98px){
+        .customer-feedback-text{
+          padding-left: 20px;
+          padding-right: 14px;
+          text-align: left;
+          line-height: 1.45;
+        }
+      }
+    </style>
 </head>
 
 <body>
@@ -241,7 +254,7 @@
     <div class="main_slide4">
       <div class="chef-feed">
         <h2 style="text-align: center; margin-bottom: 20px">Customer <span style="color: rgb(173, 2, 2)">Feedback</span></h2>
-        <p style="max-width: 600px; margin: 0 auto">I had a truly exceptional dining experience at this restaurant. The food quality was outstanding, every dish was served fresh, hot, and beautifully presented. The staff was incredibly attentive and made me feel welcomed. I highly recommend this place!</p>
+        <p class="customer-feedback-text" style="max-width: 600px; margin: 0 auto">I had a truly exceptional dining experience at this restaurant. The food quality was outstanding, every dish was served fresh, hot, and beautifully presented. The staff was incredibly attentive and made me feel welcomed. I highly recommend this place!</p>
         <div class="chef-detail">
           <img src="./project/cheef1.jpg" alt="Chef">
           <div style="text-align: center;"><h6>Developer Dude</h6><p>Web Developer</p></div>
