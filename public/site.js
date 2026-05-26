@@ -407,7 +407,7 @@ async function initCart() {
     const validItems = (c.items || []).filter(item => item && item.product && item.product._id);
 
     cartList.innerHTML = validItems.map(item => `
-      <div class='card p-3 mb-3 d-flex flex-row gap-3 align-items-center'>
+      <div class='card p-3 mb-3 d-flex flex-row gap-3 align-items-center flex-wrap'>
         <img src='${imageFor(item.product)}' style='width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0'
              onerror="this.src='${imgFallback}'">
         <div class='flex-grow-1'>
@@ -416,12 +416,12 @@ async function initCart() {
             ${lang.get() === 'ar' ? 'السعر' : 'Price'}: $${(item.product.price || 0).toFixed(2)} × ${item.qty}
           </div>
         </div>
-        <div class='d-flex gap-2 align-items-center'>
+        <div class='d-flex gap-2 align-items-center cart-qty-actions'>
           <button class='btn btn-sm btn-outline-secondary' onclick='updateQty("${item.product._id}", -1)'>-</button>
           <span class='px-2 align-self-center' style='font-weight:600;'>${item.qty}</span>
           <button class='btn btn-sm btn-outline-secondary' onclick='updateQty("${item.product._id}", 1)'>+</button>
         </div>
-        <button class='btn btn-sm btn-danger' onclick='removeFromCart("${item.product._id}")'>
+        <button class='btn btn-sm btn-danger cart-delete-btn' onclick='removeFromCart("${item.product._id}")'>
           <i class='bi bi-trash'></i>
         </button>
       </div>

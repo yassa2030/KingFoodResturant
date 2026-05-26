@@ -249,6 +249,16 @@ const chatSessionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+const chatAssetSchema = new mongoose.Schema(
+  {
+    originalName: String,
+    mimeType: String,
+    size: Number,
+    data: Buffer,
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  },
+  { timestamps: true }
+);
 
 // Paymob Transaction Schema
 const transactionSchema = new mongoose.Schema(
@@ -308,6 +318,7 @@ const Conversation     = mongoose.model('Conversation', conversationSchema);
 const Newsletter       = mongoose.model('Newsletter', newsletterSchema);
 const CouponUse        = mongoose.model('CouponUse', couponUseSchema);
 const ChatSession      = mongoose.model('ChatSession', chatSessionSchema);
+const ChatAsset        = mongoose.model('ChatAsset', chatAssetSchema);
 const UserTourState    = mongoose.model('UserTourState', userTourStateSchema);
 const NotificationRead = mongoose.model('NotificationRead', notificationReadSchema);
 const Transaction      = mongoose.model('Transaction', transactionSchema);
@@ -1090,17 +1101,37 @@ app.post('/api/user/conversations/reaction', authOnly, async (req, res) => {
 // FILE UPLOAD
 // =====================================================================
 const multer    = require('multer');
-const fs        = require('fs');
-const uploadDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-const storage = multer.diskStorage({
-  destination: (r, f, cb) => cb(null, uploadDir),
-  filename:    (r, f, cb) => cb(null, Date.now() + '-' + f.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'))
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }
 });
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 app.post('/api/upload', authOnly, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-  res.json({ fileUrl: '/uploads/' + req.file.filename, fileName: req.file.originalname, fileType: req.file.mimetype });
+  const mime = req.file.mimetype || 'application/octet-stream';
+  ChatAsset.create({
+    originalName: req.file.originalname,
+    mimeType: mime,
+    size: req.file.size || 0,
+    data: req.file.buffer,
+    uploadedBy: req.session.userId
+  }).then((asset) => {
+    res.json({ fileUrl: `/api/files/${asset._id}`, fileName: asset.originalName, fileType: asset.mimeType });
+  }).catch((e) => {
+    res.status(500).json({ message: e.message || 'Upload save failed' });
+  });
+});
+
+app.get('/api/files/:id', authOnly, async (req, res) => {
+  try {
+    const asset = await ChatAsset.findById(req.params.id).lean();
+    if (!asset?.data) return res.status(404).send('File not found');
+    res.setHeader('Content-Type', asset.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${(asset.originalName || 'file').replace(/"/g, '')}"`);
+    res.setHeader('Cache-Control', 'private, max-age=31536000');
+    res.send(asset.data);
+  } catch (e) {
+    res.status(404).send('File not found');
+  }
 });
 
 // =====================================================================

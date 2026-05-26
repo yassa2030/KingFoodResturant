@@ -17,8 +17,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  position: relative
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 100px
 }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: #ff9800; border-radius: 10px; }
 
 .brand-box {
   text-align: center;
