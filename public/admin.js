@@ -262,9 +262,17 @@ function renderAdminChat(userId) {
     }
     if (m.fileUrl) {
       const isImg = m.fileType?.startsWith('image/');
+      const isVideo = m.fileType?.startsWith('video/');
+      const isAudio = m.fileType?.startsWith('audio/');
       if (isImg) {
         html += `<div class="afile"><i class="bi bi-image"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'Image'}</a></div>`;
         html += `<img src="${m.fileUrl}" style="max-width:160px;border-radius:6px;margin-top:3px;cursor:pointer" onclick="window.open(this.src)">`;
+      } else if (isVideo) {
+        html += `<div class="afile"><i class="bi bi-camera-video"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'Video'}</a></div>`;
+        html += `<video controls preload="metadata" style="max-width:190px;border-radius:6px;margin-top:3px"><source src="${m.fileUrl}" type="${m.fileType || 'video/mp4'}"></video>`;
+      } else if (isAudio) {
+        html += `<div class="afile"><i class="bi bi-mic"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'Audio'}</a></div>`;
+        html += `<audio controls preload="metadata" style="width:190px;margin-top:3px"><source src="${m.fileUrl}" type="${m.fileType || 'audio/mpeg'}"></audio>`;
       } else {
         html += `<div class="afile"><i class="bi bi-paperclip"></i> <a href="${m.fileUrl}" target="_blank">${m.fileName || 'File'}</a></div>`;
       }
@@ -316,11 +324,7 @@ async function adminSendReply() {
 
 function adminReactToMsg(messageId, emoji) {
   if (!adminSelectedUserId || !currentAdminId) return;
-  if (adminSocket) {
-    adminSocket.emit('support:reaction', { messageId, emoji, userId: currentAdminId, targetUserId: adminSelectedUserId });
-  } else {
-    api('/api/admin/conversations/reaction', { method: 'POST', body: JSON.stringify({ messageId, emoji }) }).catch(() => {});
-  }
+  api('/api/admin/conversations/reaction', { method: 'POST', body: JSON.stringify({ messageId, emoji }) }).catch(() => {});
 }
 
 function adminCopyMsg(btn) {
